@@ -94,6 +94,54 @@ INDEX_HTML = r"""<!doctype html>
   .status-dot.ok::before { background: #30d158; }
   .status-dot.err::before { background: #ff453a; }
 
+  .quit-btn {
+    margin-left: 8px;
+    padding: 5px 12px;
+    background: white;
+    color: var(--subtle);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .quit-btn:hover {
+    background: #fde7e5;
+    color: var(--danger);
+    border-color: #f5c6c1;
+  }
+  .quit-btn svg { width: 11px; height: 11px; }
+
+  /* ---- post-quit screen ---- */
+  .goodbye {
+    text-align: center;
+    padding: 80px 20px;
+  }
+  .goodbye-icon {
+    width: 56px; height: 56px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: var(--success-bg);
+    color: var(--success);
+    display: grid; place-items: center;
+  }
+  .goodbye h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .goodbye p {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+
   /* ---- card ---- */
   .card {
     background: var(--card);
@@ -474,6 +522,13 @@ INDEX_HTML = r"""<!doctype html>
       <div class="sub">Drop a YouTube link · keep it on your Mac.</div>
     </div>
     <div class="status-dot" id="server-status">Connecting…</div>
+    <button class="quit-btn" id="quit-btn" title="Stop the local server">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M10 4V2.5H3.5v11H10V12"/>
+        <path d="M7 8h7m0 0l-2.5-2.5M14 8l-2.5 2.5"/>
+      </svg>
+      Quit
+    </button>
   </header>
 
   <div class="card">
@@ -916,6 +971,39 @@ function setDownloading(on) {
   $('#browse-btn').disabled = on;
 }
 
+async function quitServer() {
+  if (state.job) {
+    const ok = confirm('A download is running. Quit anyway?');
+    if (!ok) return;
+  } else {
+    const ok = confirm('Stop tubedrop?');
+    if (!ok) return;
+  }
+  try {
+    await fetch('/api/quit', { method: 'POST' });
+  } catch (e) {
+    // server already gone — that's fine
+  }
+  renderGoodbye();
+}
+
+function renderGoodbye() {
+  document.body.innerHTML = `
+    <div class="wrap">
+      <div class="goodbye">
+        <div class="goodbye-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12l5 5L20 7"/>
+          </svg>
+        </div>
+        <h2>tubedrop has quit.</h2>
+        <p>You can safely close this tab.</p>
+      </div>
+    </div>
+  `;
+  setTimeout(() => { try { window.close(); } catch {} }, 1500);
+}
+
 // ---- init ----
 for (const p of document.querySelectorAll('#format-pills .pill')) {
   p.addEventListener('click', () => setMode(p.dataset.mode));
@@ -923,6 +1011,7 @@ for (const p of document.querySelectorAll('#format-pills .pill')) {
 $('#fetch-btn').addEventListener('click', inspect);
 $('#download-btn').addEventListener('click', startDownload);
 $('#browse-btn').addEventListener('click', browseFolder);
+$('#quit-btn').addEventListener('click', quitServer);
 $('#url').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();

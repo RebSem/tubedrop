@@ -3,15 +3,22 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 
-# Local virtualenvs created by install.command
+# Local virtualenv + bundled binaries created by install.command
 .venv/
 .venv-3.14/
 venv/
+.bin/
+
+# Built app bundle + runtime files (created at install time)
+Tubedrop.app/
+.tubedrop.pid
+.tubedrop.url
+.tubedrop.log
 
 # macOS
 .DS_Store
 
-# User cruft from upstream tool
+# Upstream cruft
 .env
 data.json
 error_logs.txt

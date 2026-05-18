@@ -21,100 +21,83 @@ search → land on a sketchy converter site → close 4 pop-ups → realize they
 
 It was driving me crazy.
 
-I found a great open-source CLI tool — **[kaifcodec/ytconverter](https://github.com/kaifcodec/ytconverter)** — that does all the heavy lifting via `yt-dlp` and `ffmpeg`. It works perfectly, but it's a terminal tool. Every download is a series of prompts: paste URL, type number for quality, type path, confirm…
+I found a great open-source CLI tool — **[kaifcodec/ytconverter](https://github.com/kaifcodec/ytconverter)** — that does all the heavy lifting via `yt-dlp` and `ffmpeg`. It works perfectly, but it's a terminal tool with prompts.
 
-So I built a small web UI on top of it. Now downloading something is:
-
-1. Double-click an icon
-2. Paste the link in the browser tab that opens
-3. Pick MP4 or MP3
-4. Pick a folder (or use one of the chips)
-5. Hit **Download**
-
-That's the whole loop. Files land in the folder you picked, nothing leaves your Mac.
+So I built a small web UI on top of it and packaged everything to install without Terminal, without Homebrew, without an admin password.
 
 ---
 
-## Features
+## Install (Mac, ~1 minute)
 
-- **MP4 video** — choose any available resolution (up to 4K when YouTube serves it)
-- **MP3 audio** — choose bitrate, extracted via `ffmpeg`
-- **Real-time progress** — percent, size, speed, ETA — like a proper downloader
-- **Pick folder visually** — chips for Downloads / Desktop / Movies / Music, or use the native macOS folder picker
-- **Subtitles** — toggle on to grab every available language as `.srt`
-- **Shorts, playlists, regular videos** — all handled by `yt-dlp` underneath
-- **Show in Finder** — one click to reveal the saved file
+**Two clicks. That's it.**
 
-Everything runs on `127.0.0.1` — there's no remote service, no telemetry, no account. Close the terminal window and the app is gone.
+1. **Download** the project: [tubedrop-main.zip](https://github.com/RebSem/tubedrop/archive/refs/heads/main.zip) → unzip wherever (e.g. your Desktop).
+2. **Open the folder** and double-click `install.command`.
 
----
+The installer:
+- Uses Python that's already on your Mac (or triggers Apple's free Command Line Tools dialog if missing)
+- Downloads a self-contained `ffmpeg` binary into the project folder
+- Installs `yt-dlp` into a local virtual environment
+- Builds `Tubedrop.app` and puts a shortcut on your Desktop
+- Asks if you want to launch right now
 
-## Install (Mac, ~30 seconds)
+**No Homebrew. No `sudo`. No global installs.** Everything stays inside the project folder — to uninstall, just delete the folder.
 
-Requirements: **macOS** and an internet connection.
-
-1. Download this repo:
-
-   ```sh
-   git clone https://github.com/RebSem/tubedrop.git ~/Desktop/tubedrop
-   ```
-
-   Or click the green **Code → Download ZIP** button on GitHub and unzip it wherever you want (e.g. on your Desktop).
-
-2. Open the folder in Finder and double-click **`install.command`**.
-
-   It checks for Python 3 and `ffmpeg`, installs them via [Homebrew](https://brew.sh) if missing, and sets up an isolated Python environment inside the folder. ~30 seconds.
-
-3. Done. Close the installer window.
-
-> **First time:** macOS may say *"install.command can't be opened because it's from an unidentified developer."* Right-click the file → **Open** → confirm. You only need to do this once per script.
+> **First time:** macOS may say *"install.command can't be opened because it's from an unidentified developer."* Right-click → **Open** → confirm. You only do this once per file.
 
 ---
 
 ## Run
 
-Double-click **`YTConverter.command`** in the project folder.
+Double-click **Tubedrop** on your Desktop. The browser opens to the UI.
 
-A Terminal window opens (this is the local server — keep it open while you're using the app) and your browser pops up at `http://127.0.0.1:8765/`.
+When you're done — hit the **Quit** button in the top-right of the page. The server shuts down cleanly, no leftover processes.
 
-When you're done: close the Terminal window, or hit `⌃C` inside it.
+---
 
-> Want a shortcut on your Desktop? Right-click `YTConverter.command` → **Make Alias** → drag the alias to your Desktop.
+## Features
+
+- **MP4 video** — any available resolution up to 4K
+- **MP3 audio** — choose bitrate
+- **Real-time progress** — percent, size, speed, ETA
+- **Pick folder visually** — quick chips for Downloads / Desktop / Movies / Music, or the native macOS folder picker
+- **Subtitles** — toggle on to grab every available language as `.srt`
+- **Shorts, playlists, regular videos** — all handled
+- **Show in Finder** — one click after a download reveals the file
+- **Quit button** — clean shutdown, no orphaned processes
+
+Everything runs on `127.0.0.1`. No remote service, no telemetry, no account.
 
 ---
 
 ## How it works
 
-Three pieces:
+Three pieces, all kept inside the project folder:
 
-- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** — does the actual fetching from YouTube. The best-maintained tool in this space.
-- **[ffmpeg](https://ffmpeg.org/)** — merges video+audio streams, converts to MP3.
-- **A tiny Python web server** (stdlib only, ~500 lines) — serves the UI, talks to `yt-dlp`, streams progress to the browser over Server-Sent Events.
+- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** — installed in `.venv/`, fetches from YouTube
+- **[ffmpeg](https://ffmpeg.org/)** — static binary in `.bin/`, merges video+audio and converts to MP3
+- **A tiny Python web server** (stdlib only, ~600 lines) — serves the UI, streams progress to the browser over Server-Sent Events
 
-No Electron, no bundled binary, no system-wide install. Everything lives inside the project folder.
+No Electron, no system-wide install, no daemon.
 
 ---
 
 ## Troubleshooting
 
 **"Setup needed" alert when launching.**
-You haven't run `install.command` yet, or it didn't finish. Double-click it again and watch for errors.
-
-**"ffmpeg not found" alert.**
-Homebrew may not be in your `PATH`. Open Terminal and run:
-```sh
-brew install ffmpeg
-```
+You haven't run `install.command` yet, or it didn't finish. Open the folder and double-click it again.
 
 **Download fails on a specific video.**
 YouTube changes things often — keep `yt-dlp` fresh:
 ```sh
 .venv/bin/python3 -m pip install --upgrade yt-dlp
 ```
-Run that from inside the project folder.
+
+**Tubedrop.app won't open ("damaged" or "unverified").**
+Right-click the app → **Open** → confirm. Apple's Gatekeeper unblocks it after that.
 
 **Port 8765 already in use.**
-The server will pick the next free port automatically and print it in the terminal window. Just use whatever URL it shows.
+The server picks the next free port automatically. The browser opens to whatever URL the app prints.
 
 ---
 

@@ -41,6 +41,10 @@ MAX_PORT_TRIES = 20
 _jobs: dict[str, dict] = {}
 _jobs_lock = threading.Lock()
 
+# Set by serve() so /api/quit can shut down the running HTTPServer.
+_httpd_ref: list = []
+_repo_root = Path(__file__).resolve().parents[2]
+
 
 def default_download_root() -> Path:
     home = Path.home()
@@ -425,7 +429,32 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/download":
             self._start_download()
             return
+        if path == "/api/quit":
+            self._quit()
+            return
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
+
+    def _quit(self):
+        _json_response(self, HTTPStatus.OK, {"ok": True, "message": "Shutting down…"})
+        # Shutdown in a background thread so this response can finish flushing.
+        def _stop():
+            time.sleep(0.2)
+            # Clean up PID/URL files so the next launch doesn't think we're still alive.
+            for name in (".tubedrop.pid", ".tubedrop.url"):
+                try:
+                    (_repo_root / name).unlink()
+                except FileNotFoundError:
+                    pass
+                except Exception:
+                    pass
+            if _httpd_ref:
+                try:
+                    _httpd_ref[0].shutdown()
+                except Exception:
+                    pass
+            # Make sure the process actually exits even if there are stray threads.
+            os._exit(0)
+        threading.Thread(target=_stop, daemon=True).start()
 
     # --- handlers -------------------------------------------------------
 
@@ -590,17 +619,26 @@ def serve(open_browser: bool = True, port: int | None = None) -> None:
             "\033[31;1mMissing required tools:\033[0m " + ", ".join(missing),
             file=sys.stderr,
         )
-        print("Install them and try again. On macOS: brew install ffmpeg")
+        print("Run install.command (no Homebrew needed).")
         sys.exit(1)
 
     chosen = _find_free_port(port or DEFAULT_PORT)
     httpd = ThreadingHTTPServer((HOST, chosen), Handler)
+    _httpd_ref.append(httpd)
     url = f"http://{HOST}:{chosen}/"
+
+    pid_file = _repo_root / ".tubedrop.pid"
+    url_file = _repo_root / ".tubedrop.url"
+    try:
+        pid_file.write_text(str(os.getpid()))
+        url_file.write_text(url)
+    except Exception:
+        pass
 
     print()
     print(f"\033[32;1m  tubedrop ready:\033[0m {url}")
     print(f"\033[2m  Default output: {default_download_root()}\033[0m")
-    print("\033[2m  Press Ctrl+C in this window to stop the server.\033[0m")
+    print("\033[2m  Click Quit in the browser, or close this window, to stop.\033[0m")
     print()
 
     if open_browser:
@@ -612,6 +650,11 @@ def serve(open_browser: bool = True, port: int | None = None) -> None:
         print("\n\033[33;1mShutting down…\033[0m")
     finally:
         httpd.server_close()
+        for f in (pid_file, url_file):
+            try:
+                f.unlink()
+            except FileNotFoundError:
+                pass
 
 
 if __name__ == "__main__":
