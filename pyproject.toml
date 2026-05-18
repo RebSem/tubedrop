@@ -4,12 +4,13 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "ytconverter"
-version = "4.0.2.1"
-description = "Terminal-based YouTube video/audio downloader using yt-dlp and ffmpeg"
+version = "4.0.3-tubedrop"
+description = "tubedrop — a local web UI for downloading YouTube videos and audio. Built on top of kaifcodec/ytconverter."
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
-  {name = "Kaif", email = "kafcodec@gmail.com"}
+  {name = "Kaif", email = "kafcodec@gmail.com"},
+  {name = "RebSem"}
 ]
 dependencies = [
   "yt-dlp",
@@ -19,11 +20,12 @@ dependencies = [
   "httpx"
 ]
 
-requires-python = ">=3.7"
-keywords = ["youtube", "downloader", "yt-dlp", "ffmpeg", "terminal", "audio", "video", "python", "youtube-downloader"]
+requires-python = ">=3.8"
+keywords = ["youtube", "downloader", "yt-dlp", "ffmpeg", "audio", "video", "macos", "tubedrop"]
 
 [project.urls]
-Homepage = "https://github.com/kaifcodec/ytconverter"
+Homepage = "https://github.com/RebSem/tubedrop"
+Upstream = "https://github.com/kaifcodec/ytconverter"
 
 [project.scripts]
 ytconverter = "ytconverter.__main__:main"

@@ -25,6 +25,10 @@ def main():
         "-S", "-s", action="store_true", help="Launch the interactive menu and the main script.")
 
     mutually_exclusive_group.add_argument(
+        "-W", "-w", "--web", action="store_true",
+        help="Launch the web UI in your browser (local server).")
+
+    mutually_exclusive_group.add_argument(
         "-U", "--update",
         action="store_true",
         help="Update YTConverter to the latest version via pip.")
@@ -46,6 +50,11 @@ def main():
         from ytconverter.config import load_local_version
         local_version, version_type = load_local_version()
         print(f"YTConverter version: {local_version}")
+        return
+
+    elif args.web:
+        from ytconverter.web.server import serve
+        serve()
         return
 
     elif args.S:

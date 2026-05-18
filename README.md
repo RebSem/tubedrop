@@ -1,130 +1,131 @@
-## YTConverter™
-<img width="1024" height="700" alt="1000140947" src="https://github.com/user-attachments/assets/e0ce5970-36eb-4ddf-ba62-99c9c6f12f1b" />
+<div align="center">
+
+# tubedrop
+
+**Drop a YouTube link. Get the file. That's it.**
+
+A clean web UI for downloading YouTube videos and audio — runs locally on your Mac, no ads, no upload limits, no shady redirects.
+
+![screenshot](docs/screenshot.png)
+
+<sub>Built on top of [kaifcodec/ytconverter](https://github.com/kaifcodec/ytconverter) · UI by [@RebSem](https://github.com/RebSem)</sub>
+
+</div>
 
 ---
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Version-4.0.3-blueviolet?style=for-the-badge&logo=github" />
-<!--  <img src="https://img.shields.io/github/forks/kaifcodec/ytconverter?style=for-the-badge&logo=git" />
-  <img src="https://img.shields.io/github/stars/kaifcodec/ytconverter?style=for-the-badge&logo=github" /> -->
-  <img src="https://img.shields.io/github/issues/kaifcodec/ytconverter?style=for-the-badge&logo=github" />
-  <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Tested%20on-Termux-black?style=for-the-badge&logo=termux" />
-  <img src="https://img.shields.io/badge/Tested%20on-Windows-cyan?style=for-the-badge&logo=Windows" />
-  <img src="https://img.shields.io/badge/Tested%20on-Linux-black?style=for-the-badge&logo=Linux" />
- <!--- <img src="https://img.shields.io/pypi/dm/ytconverter?label=PyPI%20Downloads&color=blue&logo=pypi" /> --->
-  <img src="https://static.pepy.tech/badge/ytconverter?left_color=black&right_color=brightgreen" />
-</p>
+## Why this exists
+
+Every time I needed to save a YouTube video or rip the audio, the path was the same:
+search → land on a sketchy converter site → close 4 pop-ups → realize they cap quality at 360p → try another site → ads with porn → still no file.
+
+It was driving me crazy.
+
+I found a great open-source CLI tool — **[kaifcodec/ytconverter](https://github.com/kaifcodec/ytconverter)** — that does all the heavy lifting via `yt-dlp` and `ffmpeg`. It works perfectly, but it's a terminal tool. Every download is a series of prompts: paste URL, type number for quality, type path, confirm…
+
+So I built a small web UI on top of it. Now downloading something is:
+
+1. Double-click an icon
+2. Paste the link in the browser tab that opens
+3. Pick MP4 or MP3
+4. Pick a folder (or use one of the chips)
+5. Hit **Download**
+
+That's the whole loop. Files land in the folder you picked, nothing leaves your Mac.
 
 ---
 
+## Features
 
-> **Preface (optional):** A subtle reflection before diving into the technical details, feel free to skip to main content.
+- **MP4 video** — choose any available resolution (up to 4K when YouTube serves it)
+- **MP3 audio** — choose bitrate, extracted via `ffmpeg`
+- **Real-time progress** — percent, size, speed, ETA — like a proper downloader
+- **Pick folder visually** — chips for Downloads / Desktop / Movies / Music, or use the native macOS folder picker
+- **Subtitles** — toggle on to grab every available language as `.srt`
+- **Shorts, playlists, regular videos** — all handled by `yt-dlp` underneath
+- **Show in Finder** — one click to reveal the saved file
 
-|                                                                 |
-|-----------------------------------------------------------------|
-| **❓ Born from silent hands, shaping what they cannot fully feel.** |
-| **❓ Weighted and left alone, with no hand to guide through the quiet.** |
-| **❓ Moving the world’s sound, while never feeling its pulse.** |
-| <sub>— Author: 401</sub> |
----
-`YTConverter™` is a Python-based project developed by [kaifcodec](https://github.com/kaifcodec) designed to provide a robust tool for converting YouTube videos into various formats. This tool simplifies the process of downloading and converting videos from YouTube.
-
----
-## ✅ Features
-- *Video Downloading* : Fetch videos directly from YouTube.
-- *Audio Downloading*.: Downloads audio of any video with wide range of bitrate selection.
-- *Multiple video download*.: Now you can download multiple videos using the tool, just paste the urls one by one.
-- *Subtitles*: Subtitles download support.
-- *Playlist download*: Full playlist download in mp3 or mp4 format with subtitles 
-- *Detailed Quality* : It fetches all the available resolutions for the video and let you select as per your need.
-- *Path selections* : It has inbuilt features to detect `Downloads` folder according to what platform user in.
-- *Custom Path* : Also you can enter your suitable path for every video.
-- *Title sanitization* : It has inbuilt `re` module implementation that converts special characters to text, avoiding errors
-- *Format Conversion*.: Convert downloaded videos into different formats such as MP3, MP4, etc.
-- *Metadata Handling* : Extract and manage metadata associated with YouTube videos.
-- *Colored output* : Colorful terminal output that make it easier to select options.
-- *Interactive CLI* : It provides interactive CLI menu that is way easier than using commands everytime.
-- *Auto Update* : You can simply run `ytconverter -U` and it will update yt-dlp and ytconverter to latest version, even it can auto detect whenever there's a new release of `ytconverter`.
-
-- Many more features inside try them all...
----
-## Screenshots
-<p align= "left">
- <img width="1072" height="344" alt="1000142597" src="https://github.com/user-attachments/assets/e45decd7-4750-4d1f-b21e-4f8bb078bccc" />
-
-</p>
-<p align="left">
-  <img width="1080" height="946" alt="1000132190" src="https://github.com/user-attachments/assets/6954b057-1b23-44ec-bf1d-cb5fbff3c2a9" />
-
-</p>
+Everything runs on `127.0.0.1` — there's no remote service, no telemetry, no account. Close the terminal window and the app is gone.
 
 ---
 
-## Requirements
-- Python 3.x
-- Required Python libraries (listed in `requirements.txt`)
-- ffmpeg & yt-dlp binary
+## Install (Mac, ~30 seconds)
 
-## 🧩 Installation
+Requirements: **macOS** and an internet connection.
 
-### 🐧 Linux / Termux / macOS
-```bash
-git clone https://github.com/kaifcodec/ytconverter.git
-cd ytconverter/standalone/
-./install.sh # Auto-setup ffmpeg + dependencies
-```
-### If install.sh fails, install ffmpeg manually
-```bash
-sudo apt install ffmpeg       # Debian/Ubuntu  
-pkg install ffmpeg            # Termux  
-sudo dnf install ffmpeg       # Fedora  
-sudo pacman -S ffmpeg         # Arch
-```
-### Install ytconverter from PyPI
-```bash
-pip3 install ytconverter
-ytconverter -S
-```
+1. Download this repo:
 
-## ⚙️ Update
-### Update ytconverter
-```bash
-./update.sh # update to new repo, new yt-dlp version 
+   ```sh
+   git clone https://github.com/RebSem/tubedrop.git ~/Desktop/tubedrop
+   ```
 
-ytconverter -U # pypi package 
+   Or click the green **Code → Download ZIP** button on GitHub and unzip it wherever you want (e.g. on your Desktop).
 
-```
-## 🪟 Windows
-### Clone the repository
-```bash
-git clone https://github.com/kaifcodec/ytconverter.git
-cd ytconverter/standalone/
-install.bat # Or manually install ffmpeg and add it to PATH
-pip3 install ytconverter 
-```
-### Then run:
-```bash
-ytconverter -S
+2. Open the folder in Finder and double-click **`install.command`**.
+
+   It checks for Python 3 and `ffmpeg`, installs them via [Homebrew](https://brew.sh) if missing, and sets up an isolated Python environment inside the folder. ~30 seconds.
+
+3. Done. Close the installer window.
+
+> **First time:** macOS may say *"install.command can't be opened because it's from an unidentified developer."* Right-click the file → **Open** → confirm. You only need to do this once per script.
+
+---
+
+## Run
+
+Double-click **`YTConverter.command`** in the project folder.
+
+A Terminal window opens (this is the local server — keep it open while you're using the app) and your browser pops up at `http://127.0.0.1:8765/`.
+
+When you're done: close the Terminal window, or hit `⌃C` inside it.
+
+> Want a shortcut on your Desktop? Right-click `YTConverter.command` → **Make Alias** → drag the alias to your Desktop.
+
+---
+
+## How it works
+
+Three pieces:
+
+- **[yt-dlp](https://github.com/yt-dlp/yt-dlp)** — does the actual fetching from YouTube. The best-maintained tool in this space.
+- **[ffmpeg](https://ffmpeg.org/)** — merges video+audio streams, converts to MP3.
+- **A tiny Python web server** (stdlib only, ~500 lines) — serves the UI, talks to `yt-dlp`, streams progress to the browser over Server-Sent Events.
+
+No Electron, no bundled binary, no system-wide install. Everything lives inside the project folder.
+
+---
+
+## Troubleshooting
+
+**"Setup needed" alert when launching.**
+You haven't run `install.command` yet, or it didn't finish. Double-click it again and watch for errors.
+
+**"ffmpeg not found" alert.**
+Homebrew may not be in your `PATH`. Open Terminal and run:
+```sh
+brew install ffmpeg
 ```
 
----
-## ❤️ Support the project
+**Download fails on a specific video.**
+YouTube changes things often — keep `yt-dlp` fresh:
+```sh
+.venv/bin/python3 -m pip install --upgrade yt-dlp
+```
+Run that from inside the project folder.
 
-If this project helps you, consider supporting its development:
-
-**BTC (SegWit):** `bc1q0dzkuav8lq9lwu7gc457vwlda4utfcr5hpv7ka`
-
----
-
-### If you found this tool helpful leave a star that will motivate me to maintain this project and add new features 
-
-<a href="https://www.star-history.com/#kaifcodec/ytconverter&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=kaifcodec/ytconverter&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=kaifcodec/ytconverter&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=kaifcodec/ytconverter&type=date&legend=top-left" />
- </picture>
-</a>
+**Port 8765 already in use.**
+The server will pick the next free port automatically and print it in the terminal window. Just use whatever URL it shows.
 
 ---
+
+## Credits & license
+
+This project is a UI wrapper built on top of **[kaifcodec/ytconverter](https://github.com/kaifcodec/ytconverter)** — all the actual downloading logic is theirs. If this tool is useful to you, go give them a ⭐.
+
+Heavy lifting also done by [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ffmpeg](https://ffmpeg.org/).
+
+Licensed under the same terms as the upstream project — see [LICENSE](LICENSE).
+
+---
+
+<sub>Made for personal use. Respect the [YouTube Terms of Service](https://www.youtube.com/static?template=terms) and the rights of content creators.</sub>
