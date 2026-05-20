@@ -31,21 +31,70 @@ cat <<'BANNER'
   └──────────────────────────────────────────┘
 BANNER
 
-# ── Step 1: Python ────────────────────────────────────────────────────────
-print_step "Looking for Python 3"
-if command -v python3 >/dev/null 2>&1; then
-  PY_VER="$(python3 -V 2>&1 | awk '{print $2}')"
-  print_ok "Python $PY_VER found"
+# ── Step 1: Python 3.10+ ─────────────────────────────────────────────────
+# yt-dlp dropped support for Python 3.9. We need ≥3.10 — if the system only
+# has 3.9 (Apple's), download python-build-standalone and use that.
+print_step "Looking for Python 3.10+"
+
+PY_LOCAL_DIR="$BIN_DIR/python"
+PY_LOCAL_BIN="$PY_LOCAL_DIR/bin/python3"
+
+py_version_ok() {
+  local bin="$1"
+  [ -x "$bin" ] || return 1
+  "$bin" - <<'PYEOF' 2>/dev/null
+import sys
+sys.exit(0 if sys.version_info >= (3, 10) else 1)
+PYEOF
+}
+
+PYTHON_BIN=""
+
+# 1. local bundled Python wins
+if py_version_ok "$PY_LOCAL_BIN"; then
+  PY_VER="$("$PY_LOCAL_BIN" -V 2>&1 | awk '{print $2}')"
+  print_ok "Bundled Python $PY_VER (in .bin/python)"
+  PYTHON_BIN="$PY_LOCAL_BIN"
+
+# 2. system python3 if it's new enough
+elif command -v python3 >/dev/null 2>&1 && py_version_ok "$(command -v python3)"; then
   PYTHON_BIN="$(command -v python3)"
+  PY_VER="$("$PYTHON_BIN" -V 2>&1 | awk '{print $2}')"
+  print_ok "System Python $PY_VER ($PYTHON_BIN)"
+
+# 3. download python-build-standalone (no Homebrew, no sudo)
 else
-  print_warn "Python 3 missing. Triggering Apple's Command Line Tools installer…"
-  print_warn "A macOS dialog will appear — click Install, then come back here."
-  xcode-select --install 2>/dev/null || true
-  until command -v python3 >/dev/null 2>&1; do
-    sleep 3
-  done
-  PYTHON_BIN="$(command -v python3)"
-  print_ok "Python 3 ready"
+  SYS_VER="$(python3 -V 2>&1 | awk '{print $2}')"
+  if [ -n "$SYS_VER" ]; then
+    print_warn "System Python $SYS_VER is too old — yt-dlp needs ≥ 3.10"
+  else
+    print_warn "Python 3 not found"
+  fi
+  echo "  Downloading a self-contained Python 3.12 (~30 MB)…"
+
+  ARCH="$(uname -m)"
+  case "$ARCH" in
+    arm64)  PY_TRIPLE="aarch64-apple-darwin" ;;
+    x86_64) PY_TRIPLE="x86_64-apple-darwin"  ;;
+    *) print_err "Unsupported architecture: $ARCH"; read -p "Press Return…" _; exit 1 ;;
+  esac
+
+  PY_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20251104/cpython-3.12.12+20251104-${PY_TRIPLE}-install_only.tar.gz"
+  TMP_TGZ="$BIN_DIR/python.tar.gz"
+  rm -rf "$PY_LOCAL_DIR"
+  mkdir -p "$PY_LOCAL_DIR"
+  curl -L --fail --silent --show-error -o "$TMP_TGZ" "$PY_URL" \
+    || { print_err "Failed to download Python. Check your internet connection."; read -p "Press Return…" _; exit 1; }
+  tar -xzf "$TMP_TGZ" -C "$PY_LOCAL_DIR" --strip-components=1
+  rm -f "$TMP_TGZ"
+  xattr -dr com.apple.quarantine "$PY_LOCAL_DIR" 2>/dev/null || true
+
+  if ! py_version_ok "$PY_LOCAL_BIN"; then
+    print_err "Downloaded Python won't run."
+    read -p "Press Return…" _; exit 1
+  fi
+  PYTHON_BIN="$PY_LOCAL_BIN"
+  print_ok "Bundled Python $("$PY_LOCAL_BIN" -V 2>&1 | awk '{print $2}') installed locally"
 fi
 
 # ── Step 2: Local venv + yt-dlp ──────────────────────────────────────────
@@ -103,6 +152,7 @@ cat > "$LAUNCHER" <<LAUNCHER_EOF
 REPO_DIR="$REPO_DIR"
 cd "\$REPO_DIR"
 export PATH="\$REPO_DIR/.bin:\$PATH"
+export PYTHONWARNINGS="ignore"
 
 # If an instance is already running, just open its tab again.
 if [ -f "\$REPO_DIR/.tubedrop.pid" ] && kill -0 "\$(cat "\$REPO_DIR/.tubedrop.pid")" 2>/dev/null; then

@@ -28,7 +28,11 @@ I wrapped it in a small web UI so it's two clicks instead of ten keystrokes.
 1. [**Download the zip**](https://github.com/RebSem/tubedrop/archive/refs/heads/main.zip), unzip wherever you want.
 2. Double-click `install.command`.
 
-The installer takes ~30 seconds. It uses the Python that's already on your Mac, downloads a static `ffmpeg`, installs `yt-dlp` locally, and puts a `Tubedrop` shortcut on your Desktop.
+The installer takes ~30 seconds. It:
+- Uses the system Python if it's 3.10 or newer, **otherwise downloads a self-contained Python 3.12 (~30 MB)** so you never have to think about Python versions.
+- Drops a static `ffmpeg` binary into the project folder.
+- Installs `yt-dlp` into a local virtual environment.
+- Puts a `Tubedrop` shortcut on your Desktop.
 
 No Homebrew. No `sudo`. No global installs. Everything stays in the project folder — delete the folder to uninstall.
 
@@ -80,8 +84,9 @@ tubedrop/
 ```
 
 After install, these appear (all gitignored):
-- `.venv/` — local Python env
-- `.bin/` — bundled `ffmpeg`
+- `.venv/` — local Python env with `yt-dlp`
+- `.bin/ffmpeg` — bundled `ffmpeg` binary
+- `.bin/python/` — bundled Python 3.12 (only when your system Python is too old)
 - `.tubedrop.config` — your HD-unlock choice
 - `.tubedrop.pid` / `.url` — runtime state while the server is up
 

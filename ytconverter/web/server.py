@@ -206,13 +206,6 @@ def _base_ydl_opts(use_cookies: bool = True) -> dict:
         "quiet": True,
         "no_warnings": True,
         "noplaylist": False,
-        # Allow HLS m3u8 fallback so we still get HD even when SABR blocks
-        # the default progressive streams.
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["default", "web_safari"],
-            }
-        },
     }
     if use_cookies:
         browser = _connected_browser()

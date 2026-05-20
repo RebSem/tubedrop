@@ -1,7 +1,15 @@
 """tubedrop entry point. Only the web UI is supported."""
 import argparse
+import os
 import sys
+import warnings
 from pathlib import Path
+
+# Quiet the urllib3/LibreSSL deprecation warning in case the user is running
+# on an older Python. install.command normally bundles 3.12, so this is a
+# belt-and-suspenders thing.
+warnings.filterwarnings("ignore")
+os.environ.setdefault("PYTHONWARNINGS", "ignore")
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
