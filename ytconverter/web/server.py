@@ -159,6 +159,7 @@ def _fetch_info(url: str) -> dict:
             "count": len(entries),
             "thumbnail": first.get("thumbnail"),
             "duration": None,
+            "view_count": None,
             "video_qualities": _collect_video_qualities(first),
             "audio_bitrates": _collect_audio_bitrates(first),
         }
@@ -166,43 +167,82 @@ def _fetch_info(url: str) -> dict:
     return {
         "kind": "video",
         "title": info.get("title") or "Untitled",
-        "uploader": info.get("uploader") or "",
+        "uploader": info.get("uploader") or info.get("channel") or "",
         "duration": info.get("duration"),
         "thumbnail": info.get("thumbnail"),
+        "view_count": info.get("view_count"),
         "count": 1,
         "video_qualities": _collect_video_qualities(info),
         "audio_bitrates": _collect_audio_bitrates(info),
     }
 
 
+def _best_audio_filesize(info: dict) -> int | None:
+    """Pick the largest audio-only stream's filesize to add to video estimates."""
+    best = 0
+    for f in info.get("formats", []):
+        if (
+            f.get("acodec") and f.get("acodec") != "none"
+            and f.get("vcodec") == "none"
+        ):
+            sz = f.get("filesize") or f.get("filesize_approx") or 0
+            if sz and sz > best:
+                best = sz
+    return best or None
+
+
 def _collect_video_qualities(info: dict) -> list[dict]:
-    heights = sorted(
-        {
-            f["height"]
-            for f in info.get("formats", [])
-            if f.get("vcodec") and f.get("vcodec") != "none" and f.get("height")
-        }
-    )
-    out = [{"value": "best", "label": "Best available"}]
-    for h in heights:
-        out.append({"value": str(h), "label": f"{h}p"})
+    """Group video-only formats by height, pick the largest file per height,
+    add the best-audio size on top so the chip estimate matches what we'll
+    actually download (video+audio mux)."""
+    audio_size = _best_audio_filesize(info) or 0
+    by_height: dict[int, int] = {}
+    for f in info.get("formats", []):
+        vcodec = f.get("vcodec")
+        h = f.get("height")
+        if not h or not vcodec or vcodec == "none":
+            continue
+        sz = f.get("filesize") or f.get("filesize_approx") or 0
+        if sz:
+            by_height[h] = max(by_height.get(h, 0), sz)
+        elif h not in by_height:
+            by_height[h] = 0
+
+    out = [{"value": "best", "label": "best", "size_estimate": None}]
+    for h in sorted(by_height.keys()):
+        sz = by_height[h]
+        total = (sz + audio_size) if sz else None
+        label = "4K" if h >= 2160 else f"{h}p"
+        out.append({
+            "value": str(h),
+            "label": label,
+            "size_estimate": total,
+        })
     return out
 
 
 def _collect_audio_bitrates(info: dict) -> list[dict]:
-    abrs = sorted(
-        {
-            int(f["abr"])
-            for f in info.get("formats", [])
-            if f.get("acodec")
-            and f.get("acodec") != "none"
+    rows: list[tuple[int, int]] = []  # (abr, filesize)
+    for f in info.get("formats", []):
+        if (
+            f.get("acodec") and f.get("acodec") != "none"
             and f.get("vcodec") == "none"
             and f.get("abr")
-        }
-    )
-    out = [{"value": "best", "label": "Best available"}]
-    for b in abrs:
-        out.append({"value": str(b), "label": f"{b} kbps"})
+        ):
+            sz = f.get("filesize") or f.get("filesize_approx") or 0
+            rows.append((int(f["abr"]), sz))
+    # de-dup by abr, keep largest filesize
+    best: dict[int, int] = {}
+    for abr, sz in rows:
+        if abr not in best or sz > best[abr]:
+            best[abr] = sz
+    out = [{"value": "best", "label": "best", "size_estimate": None}]
+    for abr in sorted(best.keys()):
+        out.append({
+            "value": str(abr),
+            "label": f"{abr}",
+            "size_estimate": best[abr] or None,
+        })
     return out
 
 
@@ -332,6 +372,12 @@ def _run_job(job_id: str, params: dict) -> None:
 
     # Resolve the final on-disk file (yt-dlp post-processing changes the extension).
     final_files = _resolve_final_files(finished_files, output_dir, mode)
+    sizes = {}
+    for f in final_files:
+        try:
+            sizes[f] = Path(f).stat().st_size
+        except Exception:
+            pass
 
     with _jobs_lock:
         _jobs[job_id]["status"] = "done"
@@ -340,6 +386,7 @@ def _run_job(job_id: str, params: dict) -> None:
     emit(
         "complete",
         files=final_files,
+        sizes=sizes,
         output_dir=str(output_dir),
     )
     emit("done", ok=True)

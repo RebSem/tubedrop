@@ -57,7 +57,9 @@ else
   print_ok "Reusing existing .venv"
 fi
 "$VENV_DIR/bin/python3" -m pip install --quiet --upgrade pip
-"$VENV_DIR/bin/python3" -m pip install --quiet --upgrade yt-dlp
+# Use the nightly build — YouTube changes things often, the stable release
+# usually lags a few days behind on the most recent fixes.
+"$VENV_DIR/bin/python3" -m pip install --quiet --upgrade --pre "yt-dlp[default]"
 print_ok "yt-dlp installed in .venv"
 
 # ── Step 3: ffmpeg (no Homebrew) ─────────────────────────────────────────

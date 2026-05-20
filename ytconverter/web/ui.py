@@ -1,773 +1,1006 @@
-"""Single-file HTML/CSS/JS for the YTConverter web UI."""
+"""Single-file HTML/CSS/JS for the tubedrop web UI.
+
+Vanilla JS, no React or build step — keeps the launch instant and
+works fully offline once the page is loaded. JetBrains Mono is loaded
+from Google Fonts when online and falls back to SF Mono otherwise.
+"""
 
 INDEX_HTML = r"""<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <title>tubedrop · YouTube downloader</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f5f5f7;
-    --card: #ffffff;
-    --border: #e3e3e8;
-    --border-strong: #d2d2d7;
-    --text: #1d1d1f;
-    --muted: #86868b;
-    --subtle: #6e6e73;
-    --accent: #0071e3;
-    --accent-hover: #0077ed;
-    --accent-soft: rgba(0,113,227,0.08);
-    --danger: #d93025;
-    --danger-bg: #fde7e5;
-    --success: #137333;
-    --success-bg: #e6f4ea;
-    --radius-lg: 14px;
-    --radius: 10px;
-    --radius-sm: 8px;
-    --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06);
-    --shadow-pop: 0 1px 2px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.10);
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 40px 20px 64px;
-  }
+/* ===========================================================
+   tubedrop — redesign
+   Juicy & playful + monospace techno-vibe
+   =========================================================== */
+:root {
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  /* ---- header ---- */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 28px;
-  }
-  .logo {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
-    border-radius: 12px;
-    display: grid; place-items: center;
-    color: white; font-weight: 700; font-size: 17px;
-    letter-spacing: -0.04em;
-    box-shadow: 0 4px 12px rgba(10,132,255,0.28), inset 0 1px 0 rgba(255,255,255,0.2);
-  }
-  .title {
-    flex: 1;
-  }
-  h1 {
-    font-size: 22px;
-    font-weight: 600;
-    margin: 0;
-    letter-spacing: -0.02em;
-  }
-  .sub {
-    color: var(--muted);
-    font-size: 13px;
-    margin-top: 1px;
-  }
-  .status-dot {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--muted);
-    padding: 4px 10px;
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-  }
-  .status-dot::before {
-    content: '';
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #c7c7cc;
-    transition: background 0.2s;
-  }
-  .status-dot.ok::before { background: #30d158; }
-  .status-dot.err::before { background: #ff453a; }
+  --accent: #0066FF;
+  --accent-strong: #0052D4;
+  --accent-soft: rgba(0, 102, 255, 0.10);
+  --accent-glow: 0 8px 24px -4px rgba(0, 102, 255, 0.45),
+                 0 2px 6px rgba(0, 102, 255, 0.20);
 
-  .quit-btn {
-    margin-left: 8px;
-    padding: 5px 12px;
-    background: white;
-    color: var(--subtle);
-    border: 1px solid var(--border-strong);
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .quit-btn:hover {
-    background: #fde7e5;
-    color: var(--danger);
-    border-color: #f5c6c1;
-  }
-  .quit-btn svg { width: 11px; height: 11px; }
+  --bg: #F1F0EC;
+  --bg-grad: radial-gradient(circle at 20% 0%, #FFFFFF 0%, #F1F0EC 38%, #E8E6E0 100%);
+  --surface: #FFFFFF;
+  --surface-2: #FAFAF7;
+  --surface-elev: #FFFFFF;
+  --border: rgba(15, 15, 20, 0.07);
+  --border-strong: rgba(15, 15, 20, 0.12);
+  --text: #0A0A0F;
+  --text-muted: #5E5E66;
+  --text-subtle: #8A8A92;
+  --chip-bg: rgba(15, 15, 20, 0.04);
+  --chip-bg-hover: rgba(15, 15, 20, 0.07);
+  --inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --shadow-sm: 0 1px 2px rgba(15, 15, 20, 0.04);
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset,
+                 0 1px 2px rgba(15, 15, 20, 0.04),
+                 0 8px 24px -8px rgba(15, 15, 20, 0.10),
+                 0 24px 48px -16px rgba(15, 15, 20, 0.10);
+  --success: #16A34A;
+  --success-bg: #DCFCE7;
+  --danger: #DC2626;
+  --danger-bg: #FEE2E2;
+}
 
-  /* ---- post-quit screen ---- */
-  .goodbye {
-    text-align: center;
-    padding: 80px 20px;
-  }
-  .goodbye-icon {
-    width: 56px; height: 56px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    background: var(--success-bg);
-    color: var(--success);
-    display: grid; place-items: center;
-  }
-  .goodbye h2 {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0 0 8px;
-    letter-spacing: -0.01em;
-  }
-  .goodbye p {
-    color: var(--muted);
-    font-size: 14px;
-    margin: 0;
-  }
+[data-theme="dark"] {
+  --bg: #0B0B10;
+  --bg-grad: radial-gradient(circle at 20% 0%, #1A1A24 0%, #0E0E14 50%, #07070B 100%);
+  --surface: #16161D;
+  --surface-2: #1B1B23;
+  --surface-elev: #1F1F28;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --text: #F2F2F4;
+  --text-muted: #9C9CA6;
+  --text-subtle: #6B6B75;
+  --chip-bg: rgba(255, 255, 255, 0.05);
+  --chip-bg-hover: rgba(255, 255, 255, 0.09);
+  --inset-hi: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset,
+                 0 1px 2px rgba(0, 0, 0, 0.4),
+                 0 8px 24px -8px rgba(0, 0, 0, 0.6),
+                 0 24px 48px -16px rgba(0, 0, 0, 0.8);
+  --accent: #3D88FF;
+  --accent-strong: #1E6FFF;
+  --accent-soft: rgba(61, 136, 255, 0.14);
+  --accent-glow: 0 8px 24px -4px rgba(61, 136, 255, 0.55),
+                 0 2px 6px rgba(61, 136, 255, 0.30);
+  --success: #34D399;
+  --success-bg: rgba(52, 211, 153, 0.12);
+  --danger: #F87171;
+  --danger-bg: rgba(248, 113, 113, 0.12);
+}
 
-  /* ---- card ---- */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 22px;
-    margin-bottom: 14px;
-    box-shadow: var(--shadow-card);
-  }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  font-feature-settings: 'ss01', 'cv11', 'zero';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.4s ease;
+}
+button { font-family: inherit; }
+input { font-family: inherit; }
+::selection { background: var(--accent-soft); }
 
-  /* ---- form blocks ---- */
-  .field { margin-bottom: 18px; }
-  .field:last-child { margin-bottom: 0; }
-  label, .lbl {
-    display: block;
-    font-weight: 600;
-    font-size: 11px;
-    color: var(--subtle);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
+/* layout */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 48px;
+}
+.shell {
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
 
-  input[type=text], select {
-    width: 100%;
-    padding: 11px 14px;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    background: white;
-    font-size: 14px;
-    font-family: inherit;
-    color: var(--text);
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  input[type=text]:focus, select:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
-  select {
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%2386868b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
-  }
+/* header */
+.hdr { display: flex; align-items: center; gap: 14px; padding: 0 4px; }
+.brand { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.logo {
+  position: relative;
+  width: 52px; height: 52px; flex-shrink: 0;
+  border-radius: 16px;
+  background: linear-gradient(160deg,
+    color-mix(in oklab, var(--accent) 100%, white 22%) 0%,
+    var(--accent) 50%,
+    var(--accent-strong) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -8px 14px rgba(0,0,0,0.18),
+    0 6px 14px -2px rgba(0, 102, 255, 0.45),
+    0 12px 28px -6px rgba(0, 102, 255, 0.25);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.logo::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.4) 0%, transparent 55%);
+  pointer-events: none;
+}
+.logo-mark {
+  font-family: var(--font-mono);
+  font-weight: 700; font-size: 19px; letter-spacing: -0.05em;
+  color: white; position: relative; z-index: 1;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.15);
+}
+.wordmark { min-width: 0; }
+.wordmark h1 {
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: 22px; letter-spacing: -0.04em;
+  margin: 0; line-height: 1.1; color: var(--text);
+}
+.wordmark .tagline {
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--text-muted); margin-top: 4px; letter-spacing: 0.01em;
+}
+.hdr-actions { display: flex; align-items: center; gap: 8px; }
 
-  .url-row { display: flex; gap: 8px; }
-  .url-row input { flex: 1; }
+/* pill / status */
+.pill-btn {
+  appearance: none; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text-muted);
+  border-radius: 999px; font-family: var(--font-mono);
+  font-size: 11.5px; font-weight: 500; padding: 7px 13px;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  letter-spacing: 0.02em; transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+.pill-btn:hover { background: var(--surface-2); color: var(--text); }
+.pill-btn.danger:hover {
+  background: var(--danger-bg); color: var(--danger);
+  border-color: color-mix(in oklab, var(--danger) 35%, transparent);
+}
+.pill-btn svg { width: 12px; height: 12px; }
 
-  /* ---- buttons ---- */
-  .btn {
-    padding: 11px 18px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.06s, box-shadow 0.15s;
-    font-family: inherit;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .btn:hover { background: var(--accent-hover); }
-  .btn:active { transform: scale(0.985); }
-  .btn:disabled {
-    background: #c7c7cc;
-    cursor: not-allowed;
-  }
-  .btn.ghost {
-    background: white;
-    color: var(--text);
-    border: 1px solid var(--border-strong);
-  }
-  .btn.ghost:hover { background: #fafafc; border-color: #bcbcc1; }
-  .btn.ghost:disabled { background: #f5f5f7; color: var(--muted); }
-  .btn.lg {
-    width: 100%;
-    padding: 14px;
-    font-size: 15px;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0,113,227,0.25);
-  }
-  .btn.lg:disabled { box-shadow: none; }
+.status {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px 7px 11px;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: 999px; font-family: var(--font-mono);
+  font-size: 11.5px; font-weight: 500; color: var(--text-muted);
+  box-shadow: var(--shadow-sm);
+}
+.status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--success) 25%, transparent);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.status.err .status-dot { background: var(--danger); box-shadow: 0 0 0 3px color-mix(in oklab, var(--danger) 25%, transparent); }
+.status.warm .status-dot { background: var(--text-subtle); box-shadow: 0 0 0 3px var(--chip-bg); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
 
-  /* ---- format pills ---- */
-  .pill-group {
-    display: flex;
-    gap: 6px;
-    background: #f0f0f3;
-    padding: 4px;
-    border-radius: 12px;
-    width: fit-content;
-  }
-  .pill {
-    padding: 8px 18px;
-    border-radius: 9px;
-    background: transparent;
-    border: none;
-    color: var(--subtle);
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  .pill:hover { color: var(--text); }
-  .pill.active {
-    background: white;
-    color: var(--text);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 0 rgba(255,255,255,0.5) inset;
-  }
+/* card */
+.card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; inset: 0;
+  border-radius: inherit; pointer-events: none;
+  box-shadow: var(--inset-hi);
+}
 
-  /* ---- folder chips ---- */
-  .chips {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-top: 8px;
-  }
-  .chip {
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: #f0f0f3;
-    border: 1px solid transparent;
-    color: var(--subtle);
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: inherit;
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .chip:hover { background: #e8e8ed; color: var(--text); }
-  .chip.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-    border-color: rgba(0,113,227,0.2);
-  }
-  .chip svg { width: 13px; height: 13px; }
+/* hero */
+.hero { padding: 6px; }
+.drop-zone {
+  position: relative; border-radius: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 4%, var(--surface-2)) 0%, var(--surface-2) 100%);
+  border: 1.5px dashed color-mix(in oklab, var(--accent) 30%, var(--border-strong));
+  padding: 22px 22px 18px;
+  transition: all 0.2s ease;
+}
+.drop-zone.drag {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(1.005);
+}
+.drop-label {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-subtle); margin-bottom: 12px;
+}
+.drop-label svg { width: 12px; height: 12px; flex-shrink: 0; }
+.drop-label .kbd {
+  font-family: var(--font-mono); font-size: 10px; padding: 2px 6px;
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: 6px; color: var(--text-muted);
+  letter-spacing: 0; font-weight: 500;
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+.drop-label .spacer { flex: 1; }
+.drop-label .normal {
+  color: var(--text-subtle); font-weight: 500;
+  text-transform: none; letter-spacing: 0;
+}
 
-  .folder-row { display: flex; gap: 8px; align-items: stretch; }
-  .folder-row input { flex: 1; }
+.url-row { display: flex; align-items: stretch; gap: 10px; }
+.url-input-wrap { position: relative; flex: 1; display: flex; align-items: center; }
+.url-icon {
+  position: absolute; left: 16px;
+  color: var(--text-subtle); pointer-events: none;
+  display: flex; width: 18px; height: 18px;
+}
+.url-input {
+  width: 100%; appearance: none;
+  border: 1px solid var(--border-strong);
+  background: var(--surface); border-radius: 14px;
+  padding: 14px 16px 14px 44px;
+  font-family: var(--font-mono); font-size: 14px;
+  color: var(--text); outline: none;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+.url-input::placeholder { color: var(--text-subtle); }
+.url-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow-sm);
+}
+.url-clear {
+  position: absolute; right: 12px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: none; background: var(--chip-bg);
+  color: var(--text-muted); cursor: pointer;
+  display: grid; place-items: center;
+  transition: all 0.15s ease;
+}
+.url-clear:hover { background: var(--chip-bg-hover); color: var(--text); }
+.url-clear svg { width: 11px; height: 11px; }
 
-  /* ---- subtitles toggle ---- */
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 0 0;
-    border-top: 1px solid var(--border);
-    margin-top: 14px;
-  }
-  .toggle-row .label-block { font-size: 13px; }
-  .toggle-row .label-title { font-weight: 500; }
-  .toggle-row .label-hint { color: var(--muted); font-size: 12px; margin-top: 1px; }
-  .switch {
-    position: relative;
-    width: 42px; height: 24px;
-    flex-shrink: 0;
-  }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .switch .slider {
-    position: absolute; inset: 0;
-    background: #d2d2d7;
-    border-radius: 999px;
-    transition: background 0.2s;
-    cursor: pointer;
-  }
-  .switch .slider::before {
-    content: '';
-    position: absolute;
-    width: 20px; height: 20px;
-    left: 2px; top: 2px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
-  }
-  .switch input:checked + .slider { background: #30d158; }
-  .switch input:checked + .slider::before { transform: translateX(18px); }
+.fetch-btn {
+  appearance: none; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  border-radius: 14px; padding: 0 18px;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+  letter-spacing: 0.01em; transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm); white-space: nowrap;
+}
+.fetch-btn:hover { background: var(--surface-2); border-color: var(--text-subtle); }
+.fetch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fetch-btn svg { width: 13px; height: 13px; }
 
-  /* ---- meta preview ---- */
-  .meta {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    padding: 12px;
-    background: #fafafc;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-top: 12px;
-    animation: fadeIn 0.25s ease-out;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .thumb {
-    width: 88px;
-    height: 50px;
-    border-radius: 6px;
-    background: #e3e3e8;
-    background-size: cover;
-    background-position: center;
-    flex-shrink: 0;
-  }
-  .meta-text { flex: 1; min-width: 0; }
-  .meta-title {
-    font-weight: 500;
-    font-size: 13px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .meta-sub {
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: 2px;
-  }
+.drop-hint {
+  margin-top: 10px; font-family: var(--font-mono);
+  font-size: 11px; color: var(--text-subtle);
+  display: flex; align-items: center; gap: 6px;
+}
+.drop-hint svg { width: 12px; height: 12px; }
 
-  /* ---- progress + status ---- */
-  .progress-wrap {
-    margin-top: 18px;
-    padding: 16px;
-    background: #fafafc;
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    animation: fadeIn 0.25s ease-out;
-  }
-  .bar {
-    height: 6px;
-    background: #e3e3e8;
-    border-radius: 999px;
-    overflow: hidden;
-    position: relative;
-  }
-  .bar-fill {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--accent), #34c759);
-    border-radius: 999px;
-    transition: width 0.2s ease-out;
-  }
-  .bar-fill.indeterminate {
-    width: 35% !important;
-    animation: slide 1.4s linear infinite;
-  }
-  @keyframes slide {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(285%); }
-  }
-  .progress-stats {
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-  .progress-stats .stat-label {
-    display: block;
-    color: var(--muted);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 2px;
-  }
-  .progress-stats .stat-val {
-    color: var(--text);
-    font-weight: 500;
-    font-size: 13px;
-  }
-  .stage {
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .spinner {
-    width: 12px; height: 12px;
-    border: 2px solid #d2d2d7;
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* preview */
+.preview {
+  margin: 14px 6px 6px; border-radius: 16px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  overflow: hidden; display: grid;
+  grid-template-columns: 168px 1fr; gap: 0;
+  animation: fadeUp 0.4s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.preview-thumb {
+  position: relative; aspect-ratio: 16/9;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  overflow: hidden;
+}
+.preview-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.preview-thumb .play {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: linear-gradient(180deg, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.45) 100%);
+  color: white;
+}
+.preview-thumb .play svg {
+  width: 30px; height: 30px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+}
+.preview-thumb .duration {
+  position: absolute; bottom: 8px; right: 8px;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  padding: 3px 7px; border-radius: 6px;
+  background: rgba(0,0,0,0.75); color: white;
+  letter-spacing: 0.01em; backdrop-filter: blur(8px);
+}
+.preview-meta {
+  padding: 14px 16px; display: flex; flex-direction: column;
+  justify-content: center; min-width: 0;
+}
+.preview-title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 14px; line-height: 1.35; color: var(--text);
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+  letter-spacing: -0.005em;
+}
+.preview-sub {
+  margin-top: 6px; font-family: var(--font-mono);
+  font-size: 11px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.preview-sub .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-subtle); }
+.preview-sub .channel { color: var(--text); font-weight: 500; }
 
-  .error {
-    color: var(--danger);
-    font-size: 13px;
-    background: var(--danger-bg);
-    padding: 10px 14px;
-    border-radius: var(--radius);
-    margin-top: 12px;
-    border: 1px solid #f5c6c1;
-    animation: fadeIn 0.2s ease-out;
-  }
-  .success {
-    background: var(--success-bg);
-    border: 1px solid #c5e1cb;
-    border-radius: var(--radius);
-    padding: 14px;
-    margin-top: 12px;
-    animation: fadeIn 0.25s ease-out;
-  }
-  .success h3 {
-    margin: 0 0 8px;
-    color: var(--success);
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .file-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .file-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-top: 1px solid #d4ead9;
-    font-size: 12px;
-  }
-  .file-list li:first-child { border-top: none; }
-  .file-list .fname {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    margin-right: 12px;
-    color: var(--text);
-  }
-  .link-btn {
-    background: white;
-    border: 1px solid var(--border-strong);
-    color: var(--text);
-    cursor: pointer;
-    font-size: 12px;
-    padding: 5px 12px;
-    border-radius: 6px;
-    font-family: inherit;
-    font-weight: 500;
-    transition: all 0.15s;
-  }
-  .link-btn:hover { background: #fafafc; border-color: #bcbcc1; }
+/* sections */
+.section { padding: 18px 22px; border-top: 1px solid var(--border); }
+.section:first-child { border-top: none; }
+.section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-label {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-subtle);
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label .num {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
+  width: 16px; height: 16px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--chip-bg); color: var(--text-muted);
+  border-radius: 5px; letter-spacing: 0;
+}
 
-  footer {
-    text-align: center;
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 20px;
-  }
+/* segmented (format) */
+.segmented {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  padding: 5px; background: var(--chip-bg); border-radius: 14px;
+}
+.seg {
+  appearance: none; border: none; background: transparent;
+  padding: 11px 14px; border-radius: 10px;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 500;
+  color: var(--text-muted); cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  transition: all 0.2s ease; letter-spacing: 0.01em;
+}
+.seg:hover { color: var(--text); }
+.seg.active {
+  background: var(--surface); color: var(--text); font-weight: 600;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset,
+              0 1px 2px rgba(15,15,20,0.06),
+              0 4px 10px -2px rgba(15,15,20,0.10);
+}
+[data-theme="dark"] .seg.active {
+  background: var(--surface-elev);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset,
+              0 1px 2px rgba(0,0,0,0.4),
+              0 4px 10px -2px rgba(0,0,0,0.5);
+}
+.seg svg { width: 15px; height: 15px; }
+.seg .seg-tag {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
+  padding: 2px 5px; border-radius: 4px;
+  background: var(--chip-bg); color: var(--text-subtle);
+  letter-spacing: 0.04em;
+}
+.seg.active .seg-tag { background: var(--accent-soft); color: var(--accent); }
 
-  /* ---- icons ---- */
-  .icon { width: 14px; height: 14px; flex-shrink: 0; }
+/* quality chips */
+.q-rail { display: flex; gap: 6px; flex-wrap: wrap; }
+.q-chip {
+  appearance: none; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text-muted);
+  padding: 8px 12px; border-radius: 10px;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s ease;
+  display: inline-flex; align-items: center; gap: 6px;
+  letter-spacing: 0.01em; box-shadow: var(--shadow-sm);
+}
+.q-chip:hover { color: var(--text); border-color: var(--text-subtle); }
+.q-chip.active {
+  background: var(--accent-soft); color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 35%, transparent);
+  font-weight: 600;
+}
+.q-chip .q-size {
+  font-size: 10px; color: var(--text-subtle); font-weight: 500;
+}
+.q-chip.active .q-size {
+  color: color-mix(in oklab, var(--accent) 70%, var(--text-subtle));
+}
+
+/* folder */
+.folder-row { display: flex; gap: 8px; align-items: stretch; }
+.folder-input-wrap { position: relative; flex: 1; display: flex; align-items: center; }
+.f-icon {
+  position: absolute; left: 14px;
+  color: var(--text-subtle); display: flex;
+  width: 16px; height: 16px; pointer-events: none;
+}
+.folder-input {
+  width: 100%; appearance: none;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  border-radius: 12px; padding: 11px 14px 11px 38px;
+  font-family: var(--font-mono); font-size: 12.5px;
+  color: var(--text); outline: none;
+  transition: all 0.15s ease; box-shadow: var(--shadow-sm);
+}
+.folder-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.folder-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.f-chip {
+  appearance: none; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text-muted);
+  padding: 7px 11px; border-radius: 999px;
+  font-family: var(--font-mono); font-size: 11.5px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s ease;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+.f-chip:hover { color: var(--text); border-color: var(--text-subtle); }
+.f-chip.active {
+  background: var(--accent-soft); color: var(--accent);
+  border-color: color-mix(in oklab, var(--accent) 35%, transparent);
+  font-weight: 600;
+}
+.f-chip svg { width: 12px; height: 12px; }
+
+/* toggle */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.toggle-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.toggle-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--chip-bg); display: grid; place-items: center;
+  color: var(--text-muted); flex-shrink: 0;
+}
+.toggle-icon svg { width: 17px; height: 17px; }
+.toggle-text { min-width: 0; }
+.toggle-title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 13.5px; color: var(--text); letter-spacing: -0.005em;
+}
+.toggle-hint {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-muted); margin-top: 2px;
+}
+
+.switch { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider {
+  position: absolute; inset: 0;
+  background: var(--chip-bg-hover); border-radius: 999px;
+  cursor: pointer; transition: background 0.25s ease;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+}
+.switch .slider::before {
+  content: ''; position: absolute;
+  width: 22px; height: 22px; left: 2px; top: 2px;
+  background: white; border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.12);
+  transition: transform 0.25s cubic-bezier(.4,1.6,.5,1);
+}
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(18px); }
+
+/* CTA */
+.cta-wrap { padding: 0 22px 22px; }
+.cta {
+  width: 100%; appearance: none; border: none;
+  border-radius: 16px; padding: 18px 22px;
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--accent) 100%, white 12%) 0%,
+    var(--accent) 50%,
+    var(--accent-strong) 100%);
+  color: white;
+  font-family: var(--font-mono); font-size: 15px; font-weight: 700;
+  letter-spacing: 0.01em; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.30),
+    inset 0 -8px 14px rgba(0,0,0,0.16),
+    var(--accent-glow);
+  transition: transform 0.08s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.cta::before {
+  content: ''; position: absolute;
+  inset: 1px 1px 50% 1px; border-radius: 15px 15px 0 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 100%);
+  pointer-events: none;
+}
+.cta:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.30),
+    inset 0 -8px 14px rgba(0,0,0,0.16),
+    0 12px 30px -4px color-mix(in oklab, var(--accent) 60%, transparent),
+    0 4px 8px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+.cta:active { transform: translateY(1px) scale(0.997); }
+.cta:disabled {
+  background: var(--chip-bg-hover); color: var(--text-subtle);
+  cursor: not-allowed; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.cta:disabled::before { display: none; }
+.cta svg { width: 17px; height: 17px; }
+.cta .cta-tag {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  padding: 3px 7px; background: rgba(255,255,255,0.18);
+  border-radius: 6px; margin-left: auto; letter-spacing: 0.06em;
+}
+
+/* progress */
+.progress {
+  padding: 22px; background: var(--surface-2);
+  border-radius: 16px; border: 1px solid var(--border);
+  animation: fadeUp 0.3s ease-out;
+}
+.progress-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.progress-stage {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-muted);
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 500; letter-spacing: 0.02em;
+}
+.spinner {
+  width: 12px; height: 12px;
+  border: 2px solid var(--chip-bg-hover);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.progress-pct {
+  font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+  color: var(--text); letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.progress-pct .unit {
+  font-size: 13px; color: var(--text-muted);
+  font-weight: 500; margin-left: 1px;
+}
+.bar {
+  height: 8px; background: var(--chip-bg);
+  border-radius: 999px; overflow: hidden; position: relative;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), color-mix(in oklab, var(--accent) 70%, #34d158));
+  border-radius: 999px; transition: width 0.3s ease-out;
+  box-shadow: 0 0 12px color-mix(in oklab, var(--accent) 50%, transparent);
+  position: relative;
+}
+.bar-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+  animation: shimmer 1.6s linear infinite;
+  border-radius: inherit;
+}
+.bar-fill.indeterminate {
+  width: 35% !important;
+  animation: slide 1.6s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+@keyframes slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(285%); }
+}
+.progress-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px; margin-top: 16px;
+}
+.p-stat-label {
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.p-stat-val {
+  font-family: var(--font-mono); font-size: 13.5px; font-weight: 600;
+  color: var(--text); margin-top: 3px;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
+}
+
+/* success */
+.success {
+  padding: 22px; background: var(--surface-2);
+  border-radius: 16px; border: 1px solid var(--border);
+  animation: fadeUp 0.3s ease-out;
+}
+.success-head {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.success-icon {
+  width: 36px; height: 36px; border-radius: 12px;
+  background: var(--success-bg); color: var(--success);
+  display: grid; place-items: center;
+}
+.success-icon svg { width: 18px; height: 18px; }
+.success-title {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 15px; color: var(--text); letter-spacing: -0.01em;
+}
+.success-sub {
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--text-muted); margin-top: 1px;
+}
+.file-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px;
+  margin-top: 8px;
+}
+.file-row:first-of-type { margin-top: 0; }
+.fr-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.fr-icon svg { width: 15px; height: 15px; }
+.fr-name {
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text); white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; font-weight: 500;
+}
+.fr-size {
+  font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--text-subtle); margin-top: 2px;
+}
+.fr-meta { flex: 1; min-width: 0; }
+.fr-btn {
+  appearance: none; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  padding: 6px 12px; border-radius: 8px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.fr-btn:hover { background: var(--surface-2); border-color: var(--text-subtle); }
+.success-actions { display: flex; gap: 8px; margin-top: 14px; }
+.success-actions .pill-btn { flex: 1; justify-content: center; }
+
+/* error */
+.error {
+  padding: 14px 18px; background: var(--danger-bg);
+  color: var(--danger); border-radius: 12px;
+  font-family: var(--font-mono); font-size: 12.5px;
+  display: flex; align-items: flex-start; gap: 10px;
+  margin: 6px;
+  border: 1px solid color-mix(in oklab, var(--danger) 30%, transparent);
+}
+.error svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* footer */
+.foot {
+  margin-top: 8px; padding: 0 4px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-subtle);
+}
+.foot a {
+  color: var(--text-muted); text-decoration: none; font-weight: 600;
+  transition: color 0.15s ease;
+  border-bottom: 1px dashed var(--border-strong);
+  padding-bottom: 1px;
+}
+.foot a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.foot .foot-line {
+  display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; justify-content: center;
+}
+.foot .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-subtle); }
+.foot-lock { display: inline-flex; align-items: center; gap: 6px; }
+.foot-lock svg { width: 11px; height: 11px; }
+.foot-link-inline {
+  display: inline-flex; align-items: center; gap: 5px;
+}
+
+/* theme toggle */
+.theme-toggle {
+  width: 34px; height: 34px; padding: 0;
+  border-radius: 50%; background: var(--surface);
+  border: 1px solid var(--border-strong); color: var(--text-muted);
+  cursor: pointer; display: grid; place-items: center;
+  transition: all 0.2s ease; box-shadow: var(--shadow-sm);
+}
+.theme-toggle:hover { color: var(--text); background: var(--surface-2); }
+.theme-toggle svg { width: 14px; height: 14px; }
+
+/* goodbye */
+.goodbye { text-align: center; padding: 80px 20px; }
+.goodbye-icon {
+  width: 56px; height: 56px; margin: 0 auto 20px;
+  border-radius: 50%; background: var(--success-bg);
+  color: var(--success); display: grid; place-items: center;
+}
+.goodbye h2 {
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  margin: 0 0 8px; letter-spacing: -0.01em;
+}
+.goodbye p {
+  color: var(--text-muted); font-size: 13px; margin: 0;
+}
+
+/* responsive */
+@media (max-width: 560px) {
+  .app { padding: 20px 14px 32px; }
+  .preview { grid-template-columns: 1fr; }
+  .progress-stats { grid-template-columns: 1fr 1fr; }
+  .url-row { flex-direction: column; }
+  .folder-row { flex-direction: column; }
+  .fetch-btn { padding: 11px 18px; }
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo">td</div>
-    <div class="title">
-      <h1>tubedrop</h1>
-      <div class="sub">Drop a YouTube link · keep it on your Mac.</div>
-    </div>
-    <div class="status-dot" id="server-status">Connecting…</div>
-    <button class="quit-btn" id="quit-btn" title="Stop the local server">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-        <path d="M10 4V2.5H3.5v11H10V12"/>
-        <path d="M7 8h7m0 0l-2.5-2.5M14 8l-2.5 2.5"/>
-      </svg>
-      Quit
-    </button>
-  </header>
+<div class="app">
+  <div class="shell">
 
-  <div class="card">
-    <div class="field">
-      <label for="url">YouTube URL</label>
-      <div class="url-row">
-        <input
-          id="url"
-          type="text"
-          placeholder="Paste a YouTube link…"
-          autocomplete="off"
-          autocapitalize="off"
-          autocorrect="off"
-          spellcheck="false"
-        >
-        <button class="btn ghost" id="fetch-btn">Fetch info</button>
+    <!-- header -->
+    <header class="hdr">
+      <div class="brand">
+        <div class="logo"><span class="logo-mark">td</span></div>
+        <div class="wordmark">
+          <h1>tubedrop</h1>
+          <div class="tagline">// drop a youtube link · keep it on your mac</div>
+        </div>
       </div>
-      <div id="meta-area"></div>
-    </div>
-
-    <div class="field">
-      <span class="lbl">Format</span>
-      <div class="pill-group" id="format-pills">
-        <button class="pill active" data-mode="mp4">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline-block;vertical-align:-2px;margin-right:4px;">
-            <rect x="1.5" y="3" width="13" height="10" rx="1.5"/>
-            <path d="M6.5 6.5l3 1.5-3 1.5z" fill="currentColor"/>
-          </svg>
-          Video (MP4)
-        </button>
-        <button class="pill" data-mode="mp3">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="display:inline-block;vertical-align:-2px;margin-right:4px;">
-            <path d="M6 12V4l6-1.5v8"/>
-            <circle cx="4.5" cy="12" r="1.5" fill="currentColor"/>
-            <circle cx="10.5" cy="10.5" r="1.5" fill="currentColor"/>
-          </svg>
-          Audio (MP3)
+      <div class="hdr-actions">
+        <div class="status warm" id="status"><span class="status-dot"></span><span id="status-label">connecting</span></div>
+        <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme"></button>
+        <button class="pill-btn danger" id="quit-btn" title="Stop the local server">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l-5-5 5-5M15 12H4"/></svg>
+          quit
         </button>
       </div>
-    </div>
+    </header>
 
-    <div class="field">
-      <label id="quality-label" for="quality">Video quality</label>
-      <select id="quality"></select>
-    </div>
+    <!-- card -->
+    <div class="card">
 
-    <div class="field">
-      <label>Save to folder</label>
-      <div class="folder-row">
-        <input id="output" type="text" placeholder="~/Downloads/YTConverter">
-        <button class="btn ghost" id="browse-btn" title="Browse for folder">
-          <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M1.5 4.5h4l1.5 1.5h7.5V12a1 1 0 01-1 1h-12a1 1 0 01-1-1V4.5z"/>
-          </svg>
-          Browse…
+      <!-- hero / drop zone -->
+      <div class="hero">
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            youtube url
+            <span class="spacer"></span>
+            <span class="kbd">⌘V</span>
+            <span class="normal">to paste</span>
+          </div>
+
+          <div class="url-row">
+            <div class="url-input-wrap">
+              <span class="url-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </span>
+              <input
+                id="url"
+                class="url-input"
+                type="text"
+                placeholder="https://youtube.com/watch?v=…"
+                autocomplete="off"
+                autocapitalize="off"
+                autocorrect="off"
+                spellcheck="false">
+              <button class="url-clear" id="url-clear" title="Clear" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <button class="fetch-btn" id="fetch-btn" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
+              fetch
+            </button>
+          </div>
+
+          <div class="drop-hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5M5 21h14"/></svg>
+            or drop a link anywhere on this window
+          </div>
+        </div>
+
+        <div id="preview-area"></div>
+      </div>
+
+      <!-- format -->
+      <div class="section">
+        <div class="section-head">
+          <div class="section-label"><span class="num">01</span>format</div>
+        </div>
+        <div class="segmented" id="format-pills">
+          <button class="seg active" data-mode="mp4">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></svg>
+            video <span class="seg-tag">MP4</span>
+          </button>
+          <button class="seg" data-mode="mp3">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            audio <span class="seg-tag">MP3</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- quality -->
+      <div class="section">
+        <div class="section-head">
+          <div class="section-label"><span class="num">02</span><span id="q-label">video quality</span></div>
+        </div>
+        <div class="q-rail" id="q-rail"></div>
+      </div>
+
+      <!-- folder -->
+      <div class="section">
+        <div class="section-head">
+          <div class="section-label"><span class="num">03</span>save to folder</div>
+        </div>
+        <div class="folder-row">
+          <div class="folder-input-wrap">
+            <span class="f-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h3.5L12 5h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z"/></svg>
+            </span>
+            <input id="output" class="folder-input" type="text" spellcheck="false">
+          </div>
+          <button class="fetch-btn" id="browse-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20a2 2 0 0 1-1.78-2.91l1.85-3.95A2 2 0 0 1 7.87 12H22l-2.42 5.84A2 2 0 0 1 17.7 20H6Z"/><path d="M2 12V5a2 2 0 0 1 2-2h3.5L10 5h6a2 2 0 0 1 2 2v3"/></svg>
+            browse
+          </button>
+        </div>
+        <div class="folder-chips" id="folder-chips"></div>
+      </div>
+
+      <!-- subtitles -->
+      <div class="section">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 14h3M14 14h3M7 11h4M13 11h4"/></svg>
+            </div>
+            <div class="toggle-text">
+              <div class="toggle-title">Download subtitles</div>
+              <div class="toggle-hint">all available languages · .srt</div>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="subs">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- progress / success area -->
+      <div id="progress-area"></div>
+
+      <!-- CTA -->
+      <div class="cta-wrap" id="cta-wrap">
+        <button class="cta" id="download-btn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5M5 21h14"/></svg>
+          <span id="cta-text">download video</span>
+          <span class="cta-tag" id="cta-tag">MP4</span>
         </button>
       </div>
-      <div class="chips" id="folder-chips"></div>
     </div>
 
-    <div class="toggle-row">
-      <div class="label-block">
-        <div class="label-title">Download subtitles</div>
-        <div class="label-hint">All available languages, .srt</div>
+    <!-- footer -->
+    <footer class="foot">
+      <div class="foot-line">
+        <span class="foot-lock">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          local server · files never leave your mac
+        </span>
       </div>
-      <label class="switch">
-        <input type="checkbox" id="subs">
-        <span class="slider"></span>
-      </label>
-    </div>
+      <div class="foot-line">
+        <span>built on</span>
+        <a href="https://github.com/kaifcodec/ytconverter" target="_blank" rel="noreferrer">kaifcodec/ytconverter</a>
+        <span class="dot"></span>
+        <span>ui by</span>
+        <a href="https://github.com/RebSem/tubedrop" target="_blank" rel="noreferrer">
+          <span class="foot-link-inline">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55v-2.16c-3.2.69-3.87-1.36-3.87-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.77 2.72 1.26 3.38.96.11-.75.41-1.26.74-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .97-.31 3.18 1.18.92-.26 1.91-.39 2.89-.39.98 0 1.97.13 2.89.39 2.21-1.49 3.18-1.18 3.18-1.18.63 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.69 5.39-5.26 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.66.8.55C20.21 21.38 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+            RebSem
+          </span>
+        </a>
+        <span class="dot"></span>
+        <a href="https://rebsem.ru" target="_blank" rel="noreferrer">
+          <span class="foot-link-inline">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            rebsem.ru
+          </span>
+        </a>
+      </div>
+    </footer>
 
-    <div style="margin-top: 20px;">
-      <button class="btn lg" id="download-btn" disabled>
-        <svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M8 2v9m0 0l-3.5-3.5M8 11l3.5-3.5M2.5 13.5h11"/>
-        </svg>
-        Download
-      </button>
-    </div>
-
-    <div id="progress-area"></div>
   </div>
-
-  <footer>
-    Local server · files never leave your Mac<br>
-    <span style="opacity:0.7">Built on
-      <a href="https://github.com/kaifcodec/ytconverter" target="_blank" style="color:inherit;">kaifcodec/ytconverter</a>
-      · UI by <a href="https://github.com/RebSem" target="_blank" style="color:inherit;">RebSem</a>
-    </span>
-  </footer>
 </div>
 
 <script>
-const $ = sel => document.querySelector(sel);
-const state = {
-  mode: 'mp4',
-  inspected: null,
-  job: null,
-  defaults: null,
-  serverOk: false,
+// ---------- icons used in dynamic markup ----------
+const I = {
+  play:  '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5z"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4V8Z"/></svg>',
+  music: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h3.5L12 5h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>',
+  sparkle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>',
+  sun:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+  moon:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
 };
 
-async function loadDefaults() {
-  try {
-    const r = await fetch('/api/defaults');
-    if (!r.ok) throw new Error('not ok');
-    const data = await r.json();
-    state.defaults = data;
-    state.serverOk = true;
-    setServerStatus('ok', 'Ready');
-    $('#output').value = data.default_output_dir;
-    $('#output').placeholder = data.default_output_dir;
-    renderChips(data.presets || [], data.default_output_dir);
-    if (!data.can_pick_folder) {
-      $('#browse-btn').style.display = 'none';
-    }
-    $('#download-btn').disabled = false;
-  } catch (e) {
-    setServerStatus('err', 'Server unreachable');
-    setTimeout(loadDefaults, 1500);
-  }
-}
+const $ = s => document.querySelector(s);
+const state = {
+  mode: 'mp4',
+  quality: 'best',
+  inspected: null,
+  defaults: null,
+  presets: [],
+  serverOk: false,
+  job: null,
+  status: 'idle',  // idle | downloading | done
+};
 
-function setServerStatus(cls, text) {
-  const el = $('#server-status');
-  el.className = 'status-dot ' + (cls || '');
-  el.textContent = text;
+// ---------- theme ----------
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $('#theme-toggle').innerHTML = t === 'dark' ? I.sun : I.moon;
+  try { localStorage.setItem('tubedrop-theme', t); } catch {}
 }
-
-function renderChips(presets, currentPath) {
-  const cur = (currentPath || '').replace(/\/$/, '');
-  $('#folder-chips').innerHTML = presets.map(p => `
-    <button class="chip ${p.path.replace(/\/$/, '') === cur ? 'active' : ''}" data-path="${escapeAttr(p.path)}">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M1.5 4.5h4l1.5 1.5h7.5V12a1 1 0 01-1 1h-12a1 1 0 01-1-1V4.5z"/>
-      </svg>
-      ${escapeHtml(p.label)}
-    </button>
-  `).join('');
-  for (const b of document.querySelectorAll('.chip')) {
-    b.addEventListener('click', () => {
-      $('#output').value = b.dataset.path;
-      markChipActive(b.dataset.path);
-    });
-  }
+function initTheme() {
+  let t = 'light';
+  try { t = localStorage.getItem('tubedrop-theme') || 'light'; } catch {}
+  applyTheme(t);
 }
+$('#theme-toggle').addEventListener('click', () => {
+  const cur = document.documentElement.dataset.theme || 'light';
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+});
 
-function markChipActive(path) {
-  const norm = (path || '').replace(/\/$/, '');
-  for (const b of document.querySelectorAll('.chip')) {
-    b.classList.toggle('active', b.dataset.path.replace(/\/$/, '') === norm);
-  }
+// ---------- escape ----------
+function escH(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[c]);
 }
+function escA(s) { return escH(s); }
 
-async function browseFolder() {
-  const btn = $('#browse-btn');
-  const initial = $('#output').value.trim();
-  btn.disabled = true;
-  try {
-    const r = await fetch('/api/pick-folder?initial=' + encodeURIComponent(initial));
-    const data = await r.json();
-    if (data.path) {
-      $('#output').value = data.path;
-      markChipActive(data.path);
-    }
-  } catch (e) {
-    // silent — user can still type the path
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-function setMode(mode) {
-  state.mode = mode;
-  for (const p of document.querySelectorAll('#format-pills .pill')) {
-    p.classList.toggle('active', p.dataset.mode === mode);
-  }
-  renderQualityOptions();
-}
-
-function renderQualityOptions() {
-  const sel = $('#quality');
-  const lbl = $('#quality-label');
-  let opts;
-  if (state.mode === 'mp4') {
-    lbl.textContent = 'Video quality';
-    if (state.inspected?.video_qualities?.length) {
-      opts = state.inspected.video_qualities;
-    } else {
-      opts = [
-        { value: 'best', label: 'Best available' },
-        { value: '1080', label: '1080p' },
-        { value: '720',  label: '720p' },
-        { value: '480',  label: '480p' },
-        { value: '360',  label: '360p' },
-      ];
-    }
-  } else {
-    lbl.textContent = 'Audio bitrate';
-    if (state.inspected?.audio_bitrates?.length) {
-      opts = state.inspected.audio_bitrates;
-    } else {
-      opts = [
-        { value: 'best', label: 'Best available' },
-        { value: '320',  label: '320 kbps' },
-        { value: '192',  label: '192 kbps' },
-        { value: '128',  label: '128 kbps' },
-      ];
-    }
-  }
-  sel.innerHTML = opts
-    .map(o => `<option value="${escapeAttr(o.value)}">${escapeHtml(o.label)}</option>`)
-    .join('');
-}
-
-function renderMeta(info) {
-  if (!info) {
-    $('#meta-area').innerHTML = '';
-    return;
-  }
-  const dur = info.duration ? formatDuration(info.duration) : '';
-  const sub = info.kind === 'playlist'
-    ? `Playlist · ${info.count} videos${info.uploader ? ' · ' + escapeHtml(info.uploader) : ''}`
-    : [info.uploader, dur].filter(Boolean).map(escapeHtml).join(' · ');
-  const thumb = info.thumbnail
-    ? `style="background-image: url('${info.thumbnail.replace(/'/g, "%27")}')"`
-    : '';
-  $('#meta-area').innerHTML = `
-    <div class="meta">
-      <div class="thumb" ${thumb}></div>
-      <div class="meta-text">
-        <div class="meta-title">${escapeHtml(info.title)}</div>
-        <div class="meta-sub">${sub}</div>
-      </div>
-    </div>
-  `;
-}
-
-function formatDuration(sec) {
+// ---------- formatting ----------
+function fmtDuration(sec) {
+  if (sec == null) return '';
   sec = Math.floor(sec);
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
@@ -775,79 +1008,296 @@ function formatDuration(sec) {
   if (h) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
   return `${m}:${String(s).padStart(2,'0')}`;
 }
-
-function formatBytes(n) {
+function fmtBytes(n) {
   if (!n && n !== 0) return '–';
-  const units = ['B','KB','MB','GB'];
+  const u = ['B','KB','MB','GB'];
   let i = 0;
-  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
-  return `${n.toFixed(n >= 10 || i === 0 ? 0 : 1)} ${units[i]}`;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return `${n.toFixed(n >= 10 || i === 0 ? 0 : 1)} ${u[i]}`;
 }
-
-function formatTime(sec) {
+function fmtViews(n) {
+  if (n == null) return '';
+  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return String(n);
+}
+function fmtETA(sec) {
   if (sec == null || sec < 0) return '–';
   sec = Math.floor(sec);
   const m = Math.floor(sec / 60);
   const s = sec % 60;
-  return `${m}:${String(s).padStart(2,'0')}`;
+  if (m === 0) return s + 's';
+  return m + 'm ' + String(s).padStart(2,'0') + 's';
 }
 
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  })[c]);
+// ---------- defaults ----------
+async function loadDefaults() {
+  setStatus('warm', 'connecting');
+  try {
+    const r = await fetch('/api/defaults');
+    if (!r.ok) throw new Error('not ok');
+    const data = await r.json();
+    state.defaults = data;
+    state.presets = data.presets || [];
+    state.serverOk = true;
+    setStatus('ok', 'ready');
+    $('#output').value = data.default_output_dir;
+    $('#output').placeholder = data.default_output_dir;
+    renderFolderChips();
+    renderQuality();
+  } catch (e) {
+    setStatus('err', 'server unreachable');
+    setTimeout(loadDefaults, 1500);
+  }
 }
-function escapeAttr(s) { return escapeHtml(s); }
+
+function setStatus(cls, label) {
+  const el = $('#status');
+  el.className = 'status ' + (cls === 'ok' ? '' : cls);
+  $('#status-label').textContent = label;
+}
+
+// ---------- format select ----------
+for (const b of document.querySelectorAll('#format-pills .seg')) {
+  b.addEventListener('click', () => {
+    state.mode = b.dataset.mode;
+    for (const x of document.querySelectorAll('#format-pills .seg')) {
+      x.classList.toggle('active', x === b);
+    }
+    $('#q-label').textContent = state.mode === 'mp4' ? 'video quality' : 'audio bitrate';
+    state.quality = 'best';
+    renderQuality();
+    updateCTA();
+  });
+}
+
+// ---------- quality rail ----------
+function renderQuality() {
+  const rail = $('#q-rail');
+  const opts = state.mode === 'mp4' ? videoQualities() : audioQualities();
+  rail.innerHTML = opts.map(o => `
+    <button class="q-chip ${state.quality === o.value ? 'active' : ''}" data-q="${escA(o.value)}">
+      ${escH(o.label)}
+      ${o.size ? `<span class="q-size">${escH(o.size)}</span>` : ''}
+    </button>
+  `).join('');
+  for (const b of rail.querySelectorAll('.q-chip')) {
+    b.addEventListener('click', () => {
+      state.quality = b.dataset.q;
+      for (const x of rail.querySelectorAll('.q-chip')) {
+        x.classList.toggle('active', x === b);
+      }
+    });
+  }
+}
+
+function videoQualities() {
+  // Show only the qualities yt-dlp confirmed are available; fall back to a static list.
+  const real = state.inspected?.video_qualities;
+  if (real?.length) {
+    return real.map(q => ({
+      value: q.value,
+      label: q.label,
+      size: q.size_estimate ? '~' + fmtBytes(q.size_estimate) : (q.value === 'best' ? 'auto' : ''),
+    }));
+  }
+  return [
+    { value: 'best', label: 'best', size: 'auto' },
+    { value: '2160', label: '4K',    size: '~1.2GB' },
+    { value: '1440', label: '1440p', size: '~700MB' },
+    { value: '1080', label: '1080p', size: '~280MB' },
+    { value: '720',  label: '720p',  size: '~140MB' },
+    { value: '480',  label: '480p',  size: '~70MB' },
+  ];
+}
+function audioQualities() {
+  const real = state.inspected?.audio_bitrates;
+  if (real?.length) {
+    return real.map(q => ({
+      value: q.value,
+      label: q.label,
+      size: q.size_estimate ? '~' + fmtBytes(q.size_estimate) : (q.value === 'best' ? 'best' : ''),
+    }));
+  }
+  return [
+    { value: 'best', label: 'best', size: 'auto' },
+    { value: '320',  label: '320',  size: 'kbps' },
+    { value: '256',  label: '256',  size: 'kbps' },
+    { value: '192',  label: '192',  size: 'kbps' },
+    { value: '128',  label: '128',  size: 'kbps' },
+  ];
+}
+
+// ---------- folder ----------
+function renderFolderChips() {
+  const cur = ($('#output').value || '').replace(/\/$/, '');
+  $('#folder-chips').innerHTML = state.presets.map(p => `
+    <button class="f-chip ${p.path.replace(/\/$/, '') === cur ? 'active' : ''}" data-path="${escA(p.path)}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h3.5L12 5h6a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z"/></svg>
+      ${escH(p.label)}
+    </button>
+  `).join('');
+  for (const b of document.querySelectorAll('#folder-chips .f-chip')) {
+    b.addEventListener('click', () => {
+      $('#output').value = b.dataset.path;
+      markActiveChip();
+    });
+  }
+}
+function markActiveChip() {
+  const cur = ($('#output').value || '').replace(/\/$/, '');
+  for (const b of document.querySelectorAll('#folder-chips .f-chip')) {
+    b.classList.toggle('active', b.dataset.path.replace(/\/$/, '') === cur);
+  }
+}
+$('#output').addEventListener('input', markActiveChip);
+
+$('#browse-btn').addEventListener('click', async () => {
+  const initial = $('#output').value.trim();
+  $('#browse-btn').disabled = true;
+  try {
+    const r = await fetch('/api/pick-folder?initial=' + encodeURIComponent(initial));
+    const d = await r.json();
+    if (d.path) {
+      $('#output').value = d.path;
+      markActiveChip();
+    }
+  } catch {} finally {
+    $('#browse-btn').disabled = false;
+  }
+});
+
+// ---------- url + drop ----------
+const urlInput = $('#url');
+const urlClear = $('#url-clear');
+const fetchBtn = $('#fetch-btn');
+
+urlInput.addEventListener('input', () => {
+  urlClear.style.display = urlInput.value ? 'grid' : 'none';
+  fetchBtn.disabled = !urlInput.value.trim() || !state.serverOk;
+});
+urlInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); inspect(); }
+});
+urlInput.addEventListener('paste', () => {
+  setTimeout(() => { if (urlInput.value.trim()) inspect(); }, 50);
+});
+urlClear.addEventListener('click', () => {
+  urlInput.value = '';
+  urlClear.style.display = 'none';
+  fetchBtn.disabled = true;
+  state.inspected = null;
+  $('#preview-area').innerHTML = '';
+  renderQuality();
+  updateCTA();
+});
+
+// global ⌘V to focus
+window.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
+    if (document.activeElement !== urlInput) urlInput.focus();
+  }
+});
+
+// global drag/drop on whole window
+let dragCount = 0;
+const dz = $('#drop-zone');
+window.addEventListener('dragenter', e => { e.preventDefault(); dragCount++; dz.classList.add('drag'); });
+window.addEventListener('dragleave', e => { dragCount--; if (dragCount <= 0) { dragCount = 0; dz.classList.remove('drag'); } });
+window.addEventListener('dragover', e => { e.preventDefault(); });
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  dragCount = 0; dz.classList.remove('drag');
+  const txt = (e.dataTransfer?.getData('text/plain') || e.dataTransfer?.getData('text/uri-list') || '').trim();
+  if (txt && /youtu/i.test(txt)) {
+    urlInput.value = txt;
+    urlInput.dispatchEvent(new Event('input'));
+    inspect();
+  }
+});
+
+fetchBtn.addEventListener('click', inspect);
 
 async function inspect() {
-  const url = $('#url').value.trim();
-  if (!url) {
-    $('#meta-area').innerHTML = '';
-    return;
-  }
-  if (!state.serverOk) return;
-  const btn = $('#fetch-btn');
-  btn.disabled = true;
-  btn.textContent = 'Fetching…';
-  $('#meta-area').innerHTML = '<div class="stage"><span class="spinner"></span>Loading video info…</div>';
+  const url = urlInput.value.trim();
+  if (!url || !state.serverOk) return;
+  fetchBtn.disabled = true;
+  const oldHTML = fetchBtn.innerHTML;
+  fetchBtn.innerHTML = '<span class="spinner"></span>fetching';
+  $('#preview-area').innerHTML = '';
   try {
     const r = await fetch('/api/inspect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Failed to fetch info');
-    state.inspected = data;
-    if (data.normalized_url) $('#url').value = data.normalized_url;
-    renderMeta(data);
-    renderQualityOptions();
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'failed to fetch info');
+    state.inspected = d;
+    if (d.normalized_url) urlInput.value = d.normalized_url;
+    renderPreview(d);
+    renderQuality();
+    updateCTA();
   } catch (e) {
-    $('#meta-area').innerHTML = `<div class="error">${escapeHtml(e.message)}</div>`;
+    showError(e.message);
     state.inspected = null;
-    renderQualityOptions();
+    renderQuality();
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Fetch info';
+    fetchBtn.disabled = !urlInput.value.trim();
+    fetchBtn.innerHTML = oldHTML;
   }
 }
 
-async function startDownload() {
-  const url = $('#url').value.trim();
-  if (!url) {
-    showError('Paste a YouTube URL first.');
-    return;
+function renderPreview(info) {
+  if (!info) { $('#preview-area').innerHTML = ''; return; }
+  const isPlaylist = info.kind === 'playlist';
+  const subParts = [];
+  if (info.uploader) subParts.push(`<span class="channel">${escH(info.uploader)}</span>`);
+  if (isPlaylist) {
+    subParts.push('<span class="dot"></span><span>' + info.count + ' videos</span>');
+  } else if (info.view_count != null) {
+    subParts.push('<span class="dot"></span><span>' + fmtViews(info.view_count) + ' views</span>');
   }
-  const outputDir = $('#output').value.trim() || $('#output').placeholder;
+  $('#preview-area').innerHTML = `
+    <div class="preview">
+      <div class="preview-thumb">
+        ${info.thumbnail ? `<img src="${escA(info.thumbnail)}" alt="" onerror="this.style.display='none'">` : ''}
+        <div class="play">${I.play}</div>
+        ${info.duration ? `<div class="duration">${fmtDuration(info.duration)}</div>` : ''}
+      </div>
+      <div class="preview-meta">
+        <div class="preview-title">${escH(info.title)}</div>
+        <div class="preview-sub">${subParts.join('')}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ---------- CTA ----------
+function updateCTA() {
+  const btn = $('#download-btn');
+  const tag = $('#cta-tag');
+  const txt = $('#cta-text');
+  tag.textContent = state.mode === 'mp4' ? 'MP4' : 'MP3';
+  txt.textContent = state.mode === 'mp4' ? 'download video' : 'download audio';
+  btn.disabled = !state.inspected || state.status === 'downloading';
+}
+
+$('#download-btn').addEventListener('click', startDownload);
+
+async function startDownload() {
+  if (!state.inspected) return;
   const params = {
-    url,
+    url: urlInput.value.trim(),
     mode: state.mode,
-    quality: $('#quality').value,
-    output_dir: outputDir,
+    quality: state.quality,
+    output_dir: $('#output').value.trim() || $('#output').placeholder,
     subtitles: $('#subs').checked,
   };
-  setDownloading(true);
-  renderProgress({ stage: 'Preparing…' });
+  state.status = 'downloading';
+  setCTABusy(true);
+  renderProgress({ stage: 'preparing…' });
 
   let job;
   try {
@@ -856,179 +1306,185 @@ async function startDownload() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Failed to start');
-    job = data.job_id;
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'failed to start');
+    job = d.job_id;
   } catch (e) {
     showError(e.message);
-    setDownloading(false);
+    state.status = 'idle';
+    setCTABusy(false);
     return;
   }
 
-  const es = new EventSource(`/api/events/${job}`);
+  const es = new EventSource('/api/events/' + job);
   state.job = es;
 
-  let percent = null;
-  let stageText = 'Starting…';
-  let lastStats = {};
-
+  let percent = null, stage = 'starting…', stats = {};
   es.onmessage = (evt) => {
-    let msg;
-    try { msg = JSON.parse(evt.data); } catch { return; }
-    if (msg.event === 'stage') {
-      stageText = msg.message;
-      renderProgress({ percent, stage: stageText, stats: lastStats });
-    } else if (msg.event === 'progress') {
-      percent = msg.percent;
-      lastStats = msg;
-      renderProgress({ percent, stage: stageText, stats: msg });
-    } else if (msg.event === 'error') {
-      showError(msg.message);
-    } else if (msg.event === 'complete') {
-      renderComplete(msg);
-    } else if (msg.event === 'done') {
+    let m; try { m = JSON.parse(evt.data); } catch { return; }
+    if (m.event === 'stage') {
+      stage = m.message;
+      renderProgress({ percent, stage, stats });
+    } else if (m.event === 'progress') {
+      percent = m.percent;
+      stats = m;
+      renderProgress({ percent, stage, stats });
+    } else if (m.event === 'error') {
+      showError(m.message);
+    } else if (m.event === 'complete') {
+      renderComplete(m);
+      state.status = 'done';
+    } else if (m.event === 'done') {
       es.close();
       state.job = null;
-      setDownloading(false);
+      setCTABusy(false);
     }
   };
   es.onerror = () => {
     es.close();
     state.job = null;
-    setDownloading(false);
+    setCTABusy(false);
+    state.status = 'idle';
   };
+}
+
+function setCTABusy(on) {
+  const btn = $('#download-btn');
+  btn.disabled = on || !state.inspected;
+  fetchBtn.disabled = on || !urlInput.value.trim();
+  $('#browse-btn').disabled = on;
+  if (on) {
+    btn.innerHTML = `<span class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:white;"></span> downloading… <span class="cta-tag">${state.mode.toUpperCase()}</span>`;
+  } else if (state.status !== 'done') {
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0-4.5-4.5M12 16l4.5-4.5M5 21h14"/></svg>
+      <span id="cta-text">${state.mode === 'mp4' ? 'download video' : 'download audio'}</span>
+      <span class="cta-tag" id="cta-tag">${state.mode === 'mp4' ? 'MP4' : 'MP3'}</span>
+    `;
+  }
 }
 
 function renderProgress({ percent, stage, stats }) {
   const pct = percent != null ? Math.max(0, Math.min(100, percent)) : null;
-  const speed = stats?.speed ? `${formatBytes(stats.speed)}/s` : '–';
-  const eta = stats?.eta != null ? formatTime(stats.eta) : '–';
-  const sizeNow = stats?.downloaded != null ? formatBytes(stats.downloaded) : '–';
-  const sizeTotal = stats?.total != null ? formatBytes(stats.total) : '?';
-
   $('#progress-area').innerHTML = `
-    <div class="progress-wrap">
-      <div class="bar">
-        <div class="bar-fill ${pct == null ? 'indeterminate' : ''}" style="width:${pct != null ? pct.toFixed(1) : 0}%"></div>
+    <div class="section">
+      <div class="progress">
+        <div class="progress-head">
+          <div class="progress-stage"><span class="spinner"></span>${escH(stage || '')}</div>
+          <div class="progress-pct">${pct != null ? pct.toFixed(1) : '0.0'}<span class="unit">%</span></div>
+        </div>
+        <div class="bar">
+          <div class="bar-fill ${pct == null ? 'indeterminate' : ''}" style="width:${pct != null ? pct.toFixed(1) : 0}%"></div>
+        </div>
+        <div class="progress-stats">
+          <div>
+            <div class="p-stat-label">size</div>
+            <div class="p-stat-val">${stats?.downloaded != null ? fmtBytes(stats.downloaded) : '–'} / ${stats?.total ? fmtBytes(stats.total) : '?'}</div>
+          </div>
+          <div>
+            <div class="p-stat-label">speed</div>
+            <div class="p-stat-val">${stats?.speed ? fmtBytes(stats.speed) + '/s' : '–'}</div>
+          </div>
+          <div>
+            <div class="p-stat-label">eta</div>
+            <div class="p-stat-val">${stats?.eta != null ? fmtETA(stats.eta) : '–'}</div>
+          </div>
+        </div>
       </div>
-      <div class="progress-stats">
-        <div><span class="stat-label">Progress</span><span class="stat-val">${pct != null ? pct.toFixed(1) + '%' : '—'}</span></div>
-        <div><span class="stat-label">Size</span><span class="stat-val">${sizeNow} / ${sizeTotal}</span></div>
-        <div><span class="stat-label">Speed</span><span class="stat-val">${speed}</span></div>
-        <div><span class="stat-label">ETA</span><span class="stat-val">${eta}</span></div>
-      </div>
-      <div class="stage"><span class="spinner"></span>${escapeHtml(stage || '')}</div>
     </div>
   `;
 }
 
 function renderComplete(msg) {
   const files = msg.files || [];
-  const items = files.length
+  const rows = files.length
     ? files.map(f => `
-        <li>
-          <span class="fname" title="${escapeAttr(f)}">${escapeHtml(basename(f))}</span>
-          <button class="link-btn" data-path="${escapeAttr(f)}">Show in Finder</button>
-        </li>
+        <div class="file-row">
+          <div class="fr-icon">${f.toLowerCase().endsWith('.mp3') ? I.music : I.video}</div>
+          <div class="fr-meta">
+            <div class="fr-name" title="${escA(f)}">${escH(basename(f))}</div>
+            ${msg.sizes?.[f] ? `<div class="fr-size">${fmtBytes(msg.sizes[f])}</div>` : ''}
+          </div>
+          <button class="fr-btn" data-reveal="${escA(f)}">show in finder</button>
+        </div>
       `).join('')
-    : `<li><span class="fname">Saved to ${escapeHtml(msg.output_dir)}</span>
-         <button class="link-btn" data-path="${escapeAttr(msg.output_dir)}">Open folder</button></li>`;
+    : `
+        <div class="file-row">
+          <div class="fr-icon">${I.folder}</div>
+          <div class="fr-meta"><div class="fr-name">${escH(msg.output_dir)}</div></div>
+          <button class="fr-btn" data-reveal="${escA(msg.output_dir)}">open folder</button>
+        </div>`;
 
   $('#progress-area').innerHTML = `
-    <div class="success">
-      <h3>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 8l3 3 7-7"/>
-        </svg>
-        Download complete
-      </h3>
-      <ul class="file-list">${items}</ul>
+    <div class="section">
+      <div class="success">
+        <div class="success-head">
+          <div class="success-icon">${I.check}</div>
+          <div>
+            <div class="success-title">Download complete</div>
+            <div class="success-sub">${files.length || 1} file${(files.length || 1) !== 1 ? 's' : ''} saved to your mac</div>
+          </div>
+        </div>
+        ${rows}
+        <div class="success-actions">
+          <button class="pill-btn" id="reset-btn">${I.sparkle} download another</button>
+        </div>
+      </div>
     </div>
   `;
-  for (const b of document.querySelectorAll('.link-btn')) {
+  // Hide the CTA — there's a "download another" button inside the success card now.
+  $('#cta-wrap').style.display = 'none';
+
+  for (const b of document.querySelectorAll('[data-reveal]')) {
     b.addEventListener('click', () => {
-      fetch('/api/reveal?path=' + encodeURIComponent(b.dataset.path));
+      fetch('/api/reveal?path=' + encodeURIComponent(b.dataset.reveal));
     });
   }
+  $('#reset-btn')?.addEventListener('click', resetForm);
+}
+
+function resetForm() {
+  urlInput.value = '';
+  urlClear.style.display = 'none';
+  state.inspected = null;
+  state.status = 'idle';
+  $('#preview-area').innerHTML = '';
+  $('#progress-area').innerHTML = '';
+  $('#cta-wrap').style.display = '';
+  renderQuality();
+  updateCTA();
+  urlInput.focus();
 }
 
 function basename(p) {
   const m = p.match(/[^/\\]+$/);
   return m ? m[0] : p;
 }
-
 function showError(msg) {
-  const area = $('#progress-area');
-  area.innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
+  $('#progress-area').innerHTML = `<div class="error">${I.alert}<div>${escH(msg)}</div></div>`;
 }
 
-function setDownloading(on) {
-  $('#download-btn').disabled = on;
-  $('#download-btn').innerHTML = on
-    ? '<span class="spinner" style="border-color:rgba(255,255,255,0.4);border-top-color:white;"></span>Downloading…'
-    : '<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9m0 0l-3.5-3.5M8 11l3.5-3.5M2.5 13.5h11"/></svg>Download';
-  $('#fetch-btn').disabled = on;
-  $('#browse-btn').disabled = on;
-}
-
-async function quitServer() {
-  if (state.job) {
-    const ok = confirm('A download is running. Quit anyway?');
-    if (!ok) return;
-  } else {
-    const ok = confirm('Stop tubedrop?');
-    if (!ok) return;
-  }
-  try {
-    await fetch('/api/quit', { method: 'POST' });
-  } catch (e) {
-    // server already gone — that's fine
-  }
-  renderGoodbye();
-}
-
-function renderGoodbye() {
+// ---------- quit ----------
+$('#quit-btn').addEventListener('click', async () => {
+  if (state.job && !confirm('A download is running. Quit anyway?')) return;
+  if (!state.job && !confirm('Stop tubedrop?')) return;
+  try { await fetch('/api/quit', { method: 'POST' }); } catch {}
   document.body.innerHTML = `
-    <div class="wrap">
+    <div class="app"><div class="shell">
       <div class="goodbye">
-        <div class="goodbye-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12l5 5L20 7"/>
-          </svg>
-        </div>
-        <h2>tubedrop has quit.</h2>
+        <div class="goodbye-icon">${I.check}</div>
+        <h2>tubedrop has quit</h2>
         <p>You can safely close this tab.</p>
       </div>
-    </div>
+    </div></div>
   `;
-  setTimeout(() => { try { window.close(); } catch {} }, 1500);
-}
-
-// ---- init ----
-for (const p of document.querySelectorAll('#format-pills .pill')) {
-  p.addEventListener('click', () => setMode(p.dataset.mode));
-}
-$('#fetch-btn').addEventListener('click', inspect);
-$('#download-btn').addEventListener('click', startDownload);
-$('#browse-btn').addEventListener('click', browseFolder);
-$('#quit-btn').addEventListener('click', quitServer);
-$('#url').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    inspect();
-  }
-});
-$('#url').addEventListener('paste', () => {
-  setTimeout(() => {
-    if ($('#url').value.trim()) inspect();
-  }, 50);
-});
-$('#output').addEventListener('input', () => {
-  markChipActive($('#output').value.trim());
+  setTimeout(() => { try { window.close(); } catch {} }, 1200);
 });
 
+// ---------- init ----------
+initTheme();
+renderQuality();
 loadDefaults();
-renderQualityOptions();
 </script>
 </body>
 </html>
