@@ -44,6 +44,22 @@ Double-click `Tubedrop` on your Desktop → paste a link → pick a quality → 
 
 ---
 
+## Unlock HD (when YouTube caps to 360p)
+
+Sometimes YouTube hides everything above 360p from anonymous tools. When that happens, tubedrop shows a banner in the Quality section:
+
+<div align="center">
+  <img src="docs/hd-modal.png" alt="Connect a browser to unlock HD" width="520">
+</div>
+
+Click **unlock hd** → pick the browser you're logged into YouTube with (Safari / Chrome / Firefox / Brave / Edge). tubedrop tells `yt-dlp` to read that browser's YouTube cookies, which lifts the cap and unlocks 720p / 1080p / 4K.
+
+- **Cookies never leave your Mac.** tubedrop talks only to `youtube.com`.
+- **One-time setup.** Your choice is saved to `.tubedrop.config` and used on every launch.
+- **Reversible.** Click the `hd · safari` chip in the header → **disconnect** to go back to anonymous mode.
+
+---
+
 ## Files
 
 ```
@@ -52,7 +68,8 @@ tubedrop/
 ├── Tubedrop.command      ← created by installer (and on Desktop)
 ├── README.md
 ├── docs/
-│   └── screenshot.png
+│   ├── screenshot.png
+│   └── hd-modal.png
 └── ytconverter/          ← Python package
     ├── __main__.py
     ├── constants.py
@@ -62,7 +79,11 @@ tubedrop/
         └── ui.py
 ```
 
-After install, `.venv/` and `.bin/` appear (Python env + ffmpeg). Both gitignored.
+After install, these appear (all gitignored):
+- `.venv/` — local Python env
+- `.bin/` — bundled `ffmpeg`
+- `.tubedrop.config` — your HD-unlock choice
+- `.tubedrop.pid` / `.url` — runtime state while the server is up
 
 ---
 

@@ -15,6 +15,7 @@ Tubedrop.app/
 .tubedrop.pid
 .tubedrop.url
 .tubedrop.log
+.tubedrop.config
 
 # macOS
 .DS_Store

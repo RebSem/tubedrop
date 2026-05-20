@@ -137,31 +137,126 @@ def _normalize_url(url: str) -> str:
     return url
 
 
-def _fetch_info(url: str) -> dict:
-    """Pull metadata + formats. Returns a UI-friendly dict."""
-    opts = {
+# ── cookie / HD-unlock support ──────────────────────────────────────────
+# YouTube SABR-blocks anonymous yt-dlp requests on many videos — only the
+# legacy 360p format comes back. Passing logged-in cookies (and letting
+# yt-dlp fall back to the HLS manifest) unlocks the full quality ladder.
+#
+# This is opt-in: the user picks a browser through the UI. We never read
+# cookies until they say so. The choice is persisted in .tubedrop.config.
+
+_CONFIG_FILE = _repo_root / ".tubedrop.config"
+
+# Browser id -> (display name, list of candidate cookie-store paths on macOS).
+# Safari moved into Containers/ in macOS 14, but older systems still use the
+# pre-sandbox location.
+_BROWSER_PATHS: dict[str, tuple[str, list[Path]]] = {
+    "safari":  ("Safari",  [
+        Path.home() / "Library/Containers/com.apple.Safari/Data/Library/Cookies/Cookies.binarycookies",
+        Path.home() / "Library/Cookies/Cookies.binarycookies",
+    ]),
+    "chrome":  ("Chrome",  [Path.home() / "Library/Application Support/Google/Chrome/Default/Cookies"]),
+    "brave":   ("Brave",   [Path.home() / "Library/Application Support/BraveSoftware/Brave-Browser/Default/Cookies"]),
+    "edge":    ("Edge",    [Path.home() / "Library/Application Support/Microsoft Edge/Default/Cookies"]),
+    "firefox": ("Firefox", [Path.home() / "Library/Application Support/Firefox/Profiles"]),
+}
+
+
+def _browser_cookie_path(browser: str) -> Path | None:
+    for p in _BROWSER_PATHS[browser][1]:
+        if p.exists():
+            return p
+    return None
+
+
+def _load_config() -> dict:
+    try:
+        return json.loads(_CONFIG_FILE.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_config(cfg: dict) -> None:
+    try:
+        _CONFIG_FILE.write_text(json.dumps(cfg, indent=2))
+    except Exception:
+        pass
+
+
+def _detect_browsers() -> list[dict]:
+    """List browsers whose cookie store exists on this machine."""
+    if platform.system() != "Darwin":
+        return []
+    out = []
+    for bid, (label, _paths) in _BROWSER_PATHS.items():
+        if _browser_cookie_path(bid):
+            out.append({"id": bid, "label": label})
+    return out
+
+
+def _connected_browser() -> str | None:
+    """Currently-configured browser id, or None."""
+    return _load_config().get("cookies_browser") or None
+
+
+def _base_ydl_opts(use_cookies: bool = True) -> dict:
+    """Common yt-dlp options. If a browser is connected, read its cookies
+    (this is what unlocks HD)."""
+    opts: dict = {
         "quiet": True,
         "no_warnings": True,
-        "skip_download": True,
         "noplaylist": False,
+        # Allow HLS m3u8 fallback so we still get HD even when SABR blocks
+        # the default progressive streams.
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["default", "web_safari"],
+            }
+        },
     }
+    if use_cookies:
+        browser = _connected_browser()
+        if browser:
+            opts["cookiesfrombrowser"] = (browser,)
+    return opts
+
+
+def _fetch_info(url: str) -> dict:
+    """Pull metadata + formats. Returns a UI-friendly dict."""
+    opts = _base_ydl_opts()
+    opts["skip_download"] = True
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
 
     is_playlist = info.get("_type") == "playlist" or "entries" in info
+    target = info
     if is_playlist:
         entries = [e for e in (info.get("entries") or []) if e]
-        first = entries[0] if entries else {}
+        target = entries[0] if entries else {}
+
+    vq = _collect_video_qualities(target)
+    aq = _collect_audio_bitrates(target)
+
+    # SABR-throttled videos return only the legacy mp4 format 18 (360p).
+    # If the max real height we see is ≤ 360, surface a flag so the UI can
+    # offer to connect a browser. We don't auto-do anything.
+    real_heights = [int(q["value"]) for q in vq if q["value"].isdigit()]
+    max_h = max(real_heights) if real_heights else 0
+    throttled = (max_h <= 360) and (_connected_browser() is None)
+
+    if is_playlist:
         return {
             "kind": "playlist",
-            "title": info.get("title") or first.get("title") or "Playlist",
+            "title": info.get("title") or target.get("title") or "Playlist",
             "uploader": info.get("uploader") or "",
-            "count": len(entries),
-            "thumbnail": first.get("thumbnail"),
+            "count": len([e for e in (info.get("entries") or []) if e]),
+            "thumbnail": target.get("thumbnail"),
             "duration": None,
             "view_count": None,
-            "video_qualities": _collect_video_qualities(first),
-            "audio_bitrates": _collect_audio_bitrates(first),
+            "video_qualities": vq,
+            "audio_bitrates": aq,
+            "youtube_throttled": throttled,
+            "connected_browser": _connected_browser(),
         }
 
     return {
@@ -172,8 +267,10 @@ def _fetch_info(url: str) -> dict:
         "thumbnail": info.get("thumbnail"),
         "view_count": info.get("view_count"),
         "count": 1,
-        "video_qualities": _collect_video_qualities(info),
-        "audio_bitrates": _collect_audio_bitrates(info),
+        "video_qualities": vq,
+        "audio_bitrates": aq,
+        "youtube_throttled": throttled,
+        "connected_browser": _connected_browser(),
     }
 
 
@@ -192,11 +289,18 @@ def _best_audio_filesize(info: dict) -> int | None:
 
 
 def _collect_video_qualities(info: dict) -> list[dict]:
-    """Group video-only formats by height, pick the largest file per height,
-    add the best-audio size on top so the chip estimate matches what we'll
-    actually download (video+audio mux)."""
+    """Group video formats by height.
+
+    Two kinds of formats reach us:
+      * Adaptive video-only streams (need separate audio merged in).
+      * Muxed/HLS streams that already include audio.
+
+    We pick the largest file per height across both, then add audio size
+    on top only when the stream is video-only.
+    """
     audio_size = _best_audio_filesize(info) or 0
-    by_height: dict[int, int] = {}
+    by_height: dict[int, int] = {}  # height -> best estimated total size
+
     for f in info.get("formats", []):
         vcodec = f.get("vcodec")
         h = f.get("height")
@@ -204,19 +308,20 @@ def _collect_video_qualities(info: dict) -> list[dict]:
             continue
         sz = f.get("filesize") or f.get("filesize_approx") or 0
         if sz:
-            by_height[h] = max(by_height.get(h, 0), sz)
+            has_audio = f.get("acodec") and f.get("acodec") != "none"
+            total = sz if has_audio else sz + audio_size
+            by_height[h] = max(by_height.get(h, 0), total)
         elif h not in by_height:
             by_height[h] = 0
 
     out = [{"value": "best", "label": "best", "size_estimate": None}]
     for h in sorted(by_height.keys()):
         sz = by_height[h]
-        total = (sz + audio_size) if sz else None
         label = "4K" if h >= 2160 else f"{h}p"
         out.append({
             "value": str(h),
             "label": label,
-            "size_estimate": total,
+            "size_estimate": sz or None,
         })
     return out
 
@@ -257,18 +362,16 @@ def _resolve_output_dir(raw: str | None) -> Path:
 
 def _build_ydl_opts(mode: str, quality: str, output_dir: Path, with_subs: bool, progress_hook) -> dict:
     outtmpl = str(output_dir / "%(title).80B [%(id)s].%(ext)s")
-    opts: dict = {
+    opts = _base_ydl_opts()
+    opts.update({
         "outtmpl": outtmpl,
         "restrictfilenames": False,
         "noprogress": True,
-        "no_warnings": True,
-        "quiet": True,
         "progress_hooks": [progress_hook],
-        "noplaylist": False,
         "ignoreerrors": "only_download",
         "concurrent_fragment_downloads": 4,
         "retries": 5,
-    }
+    })
 
     if mode == "mp4":
         if quality == "best":
@@ -449,12 +552,25 @@ class Handler(BaseHTTPRequestHandler):
                     "platform": platform.system(),
                     "presets": folder_presets(),
                     "can_pick_folder": platform.system() == "Darwin",
+                    "browsers": _detect_browsers(),
+                    "connected_browser": _connected_browser(),
                 },
             )
             return
 
         if path == "/api/pick-folder":
             self._pick_folder()
+            return
+
+        if path == "/api/browsers":
+            _json_response(
+                self,
+                HTTPStatus.OK,
+                {
+                    "browsers": _detect_browsers(),
+                    "connected": _connected_browser(),
+                },
+            )
             return
 
         if path.startswith("/api/events/"):
@@ -476,10 +592,38 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/download":
             self._start_download()
             return
+        if path == "/api/connect-browser":
+            self._connect_browser()
+            return
+        if path == "/api/disconnect-browser":
+            self._disconnect_browser()
+            return
         if path == "/api/quit":
             self._quit()
             return
         self.send_error(HTTPStatus.NOT_FOUND, "Not found")
+
+    def _connect_browser(self):
+        body = _read_json_body(self) or {}
+        browser = (body.get("browser") or "").strip().lower()
+        if browser not in _BROWSER_PATHS:
+            _json_response(self, HTTPStatus.BAD_REQUEST,
+                           {"error": "Unknown browser. Use safari/chrome/firefox/brave/edge."})
+            return
+        if not _browser_cookie_path(browser):
+            _json_response(self, HTTPStatus.BAD_REQUEST,
+                           {"error": f"{_BROWSER_PATHS[browser][0]} is not installed on this Mac."})
+            return
+        cfg = _load_config()
+        cfg["cookies_browser"] = browser
+        _save_config(cfg)
+        _json_response(self, HTTPStatus.OK, {"ok": True, "connected": browser})
+
+    def _disconnect_browser(self):
+        cfg = _load_config()
+        cfg.pop("cookies_browser", None)
+        _save_config(cfg)
+        _json_response(self, HTTPStatus.OK, {"ok": True})
 
     def _quit(self):
         _json_response(self, HTTPStatus.OK, {"ok": True, "message": "Shutting down…"})

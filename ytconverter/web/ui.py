@@ -744,6 +744,172 @@ input { font-family: inherit; }
 .theme-toggle svg { width: 14px; height: 14px; }
 
 /* goodbye */
+/* HD-unlock banner inside the quality section */
+.hd-banner {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface-2));
+  border: 1px solid color-mix(in oklab, var(--accent) 28%, var(--border-strong));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  animation: fadeUp 0.3s ease-out;
+}
+.hd-banner-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.hd-banner-icon svg { width: 14px; height: 14px; }
+.hd-banner-text { flex: 1; min-width: 0; color: var(--text-muted); line-height: 1.45; }
+.hd-banner-text strong { color: var(--text); font-weight: 600; }
+.hd-banner-btn {
+  appearance: none; border: none;
+  background: var(--accent); color: white;
+  padding: 8px 14px; border-radius: 9px;
+  font-family: var(--font-mono); font-size: 11.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s ease;
+  display: inline-flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0,102,255,0.25);
+}
+.hd-banner-btn:hover { background: var(--accent-strong); }
+.hd-banner-btn svg { width: 12px; height: 12px; }
+
+/* HD-status chip in header */
+.hd-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 11px 7px 9px;
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  border: 1px solid color-mix(in oklab, var(--accent) 32%, var(--border-strong));
+  border-radius: 999px;
+  font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+.hd-chip:hover { background: color-mix(in oklab, var(--accent) 20%, var(--surface)); }
+.hd-chip svg { width: 12px; height: 12px; }
+
+/* Modal */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.36);
+  backdrop-filter: blur(8px);
+  display: grid; place-items: center;
+  z-index: 50;
+  padding: 24px;
+  animation: fadeIn 0.18s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+[data-theme="dark"] .modal-backdrop { background: rgba(0,0,0,0.6); }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.4);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  animation: modalIn 0.22s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+.modal-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.modal-icon svg { width: 22px; height: 22px; }
+.modal h2 {
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  margin: 0; line-height: 1.25; letter-spacing: -0.02em;
+  color: var(--text);
+}
+.modal-sub {
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--text-muted); margin-top: 3px;
+}
+.modal-body p {
+  font-family: var(--font-mono); font-size: 12.5px;
+  color: var(--text-muted); line-height: 1.6;
+  margin: 0 0 12px;
+}
+.modal-body p strong { color: var(--text); font-weight: 600; }
+.modal-bullet {
+  display: flex; gap: 10px; font-family: var(--font-mono);
+  font-size: 12px; color: var(--text-muted); padding: 8px 0;
+  line-height: 1.5;
+}
+.modal-bullet svg {
+  width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;
+  color: var(--success);
+}
+.modal-divider {
+  height: 1px; background: var(--border); margin: 14px 0;
+}
+.modal-section-label {
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-subtle);
+  margin-bottom: 10px;
+}
+.browser-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.browser-btn {
+  appearance: none;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex; align-items: center; gap: 10px;
+  text-align: left;
+}
+.browser-btn:hover {
+  background: var(--surface);
+  border-color: color-mix(in oklab, var(--accent) 40%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -2px rgba(15,15,20,0.08);
+}
+.browser-btn:disabled {
+  opacity: 0.4; cursor: not-allowed;
+}
+.browser-btn .b-emoji {
+  font-size: 18px; line-height: 1; flex-shrink: 0;
+}
+.browser-btn .b-meta { display: flex; flex-direction: column; gap: 1px; }
+.browser-btn .b-name { font-size: 13px; }
+.browser-btn .b-hint {
+  font-size: 10px; font-weight: 500; color: var(--text-subtle);
+  letter-spacing: 0.02em;
+}
+.modal-actions {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 18px;
+}
+.modal-actions .pill-btn { padding: 9px 16px; }
+
 .goodbye { text-align: center; padding: 80px 20px; }
 .goodbye-icon {
   width: 56px; height: 56px; margin: 0 auto 20px;
@@ -783,6 +949,7 @@ input { font-family: inherit; }
         </div>
       </div>
       <div class="hdr-actions">
+        <div id="hd-chip-slot"></div>
         <div class="status warm" id="status"><span class="status-dot"></span><span id="status-label">connecting</span></div>
         <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme"></button>
         <button class="pill-btn danger" id="quit-btn" title="Stop the local server">
@@ -862,6 +1029,7 @@ input { font-family: inherit; }
           <div class="section-label"><span class="num">02</span><span id="q-label">video quality</span></div>
         </div>
         <div class="q-rail" id="q-rail"></div>
+        <div id="hd-banner-slot"></div>
       </div>
 
       <!-- folder -->
@@ -948,6 +1116,8 @@ input { font-family: inherit; }
   </div>
 </div>
 
+<div id="modal-root"></div>
+
 <script>
 // ---------- icons used in dynamic markup ----------
 const I = {
@@ -969,9 +1139,15 @@ const state = {
   inspected: null,
   defaults: null,
   presets: [],
+  browsers: [],          // browsers available on this Mac
+  connectedBrowser: null, // currently-configured browser id
   serverOk: false,
   job: null,
   status: 'idle',  // idle | downloading | done
+};
+
+const BROWSER_EMOJI = {
+  safari: '🧭', chrome: '🌐', firefox: '🦊', brave: '🦁', edge: '🌊',
 };
 
 // ---------- theme ----------
@@ -1040,16 +1216,181 @@ async function loadDefaults() {
     const data = await r.json();
     state.defaults = data;
     state.presets = data.presets || [];
+    state.browsers = data.browsers || [];
+    state.connectedBrowser = data.connected_browser || null;
     state.serverOk = true;
     setStatus('ok', 'ready');
     $('#output').value = data.default_output_dir;
     $('#output').placeholder = data.default_output_dir;
     renderFolderChips();
     renderQuality();
+    renderHDChip();
   } catch (e) {
     setStatus('err', 'server unreachable');
     setTimeout(loadDefaults, 1500);
   }
+}
+
+// ---------- HD-unlock (cookies-from-browser) ----------
+function renderHDChip() {
+  const slot = $('#hd-chip-slot');
+  if (!state.connectedBrowser) { slot.innerHTML = ''; return; }
+  const label = state.browsers.find(b => b.id === state.connectedBrowser)?.label
+                || state.connectedBrowser;
+  slot.innerHTML = `
+    <button class="hd-chip" id="hd-chip-btn" title="Disconnect ${escH(label)}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="11" width="16" height="10" rx="2"/>
+        <path d="M8 11V7a4 4 0 0 1 7-2.6"/>
+      </svg>
+      hd · ${escH(label.toLowerCase())}
+    </button>
+  `;
+  $('#hd-chip-btn').addEventListener('click', openHDModal);
+}
+
+function renderHDBanner() {
+  const slot = $('#hd-banner-slot');
+  const throttled = state.inspected?.youtube_throttled;
+  if (!throttled || state.connectedBrowser) { slot.innerHTML = ''; return; }
+  slot.innerHTML = `
+    <div class="hd-banner">
+      <div class="hd-banner-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="10" rx="2"/>
+          <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+        </svg>
+      </div>
+      <div class="hd-banner-text">
+        <strong>YouTube limited this video to 360p</strong> for anonymous requests.
+        Connect a browser once to unlock HD on this and future videos.
+      </div>
+      <button class="hd-banner-btn" id="hd-banner-btn">
+        unlock hd
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14M13 6l6 6-6 6"/>
+        </svg>
+      </button>
+    </div>
+  `;
+  $('#hd-banner-btn').addEventListener('click', openHDModal);
+}
+
+function openHDModal() {
+  const root = $('#modal-root');
+  const browsers = state.browsers || [];
+  const allBrowsers = ['safari','chrome','firefox','brave','edge'];
+  const connected = state.connectedBrowser;
+
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modal-backdrop">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <div class="modal-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="11" width="16" height="10" rx="2"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+            </svg>
+          </div>
+          <div>
+            <h2>Connect a browser to unlock HD</h2>
+            <div class="modal-sub">// one-time setup · remembered between launches</div>
+          </div>
+        </div>
+        <div class="modal-body">
+          <p>YouTube serves only 360p to anonymous tools for some videos. Reading your browser's logged-in YouTube cookies lifts that cap and unlocks 720p / 1080p / 4K.</p>
+          <div class="modal-bullet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+            <div>Cookies are read locally by <strong>yt-dlp</strong>. They never leave your Mac.</div>
+          </div>
+          <div class="modal-bullet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+            <div>tubedrop talks only to <code>youtube.com</code>. No other site sees your cookies.</div>
+          </div>
+          <div class="modal-bullet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+            <div>Disconnect any time — the choice is just one line in <code>.tubedrop.config</code>.</div>
+          </div>
+
+          <div class="modal-divider"></div>
+          <div class="modal-section-label">${connected ? 'Currently connected' : 'Pick a browser'}</div>
+          <div class="browser-grid">
+            ${allBrowsers.map(bid => {
+              const found = browsers.find(b => b.id === bid);
+              const label = found?.label || bid.charAt(0).toUpperCase() + bid.slice(1);
+              const installed = !!found;
+              const isActive = connected === bid;
+              return `
+                <button class="browser-btn" data-browser="${bid}"
+                  ${!installed ? 'disabled' : ''}
+                  style="${isActive ? 'border-color: var(--accent); background: var(--accent-soft);' : ''}">
+                  <span class="b-emoji">${BROWSER_EMOJI[bid] || '🌐'}</span>
+                  <div class="b-meta">
+                    <span class="b-name">${escH(label)}</span>
+                    <span class="b-hint">${
+                      isActive ? '· connected' :
+                      installed ? 'use this browser' : 'not installed'
+                    }</span>
+                  </div>
+                </button>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="modal-actions">
+            ${connected ? `<button class="pill-btn danger" id="modal-disconnect">disconnect</button>` : ''}
+            <button class="pill-btn" id="modal-close">close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // wire up
+  $('#modal-backdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-backdrop') closeHDModal();
+  });
+  $('#modal-close').addEventListener('click', closeHDModal);
+  if (connected) $('#modal-disconnect').addEventListener('click', async () => {
+    await fetch('/api/disconnect-browser', { method: 'POST' });
+    state.connectedBrowser = null;
+    renderHDChip();
+    closeHDModal();
+    // Re-inspect to refresh the throttled banner / quality list.
+    if (urlInput.value.trim()) inspect();
+  });
+  for (const btn of root.querySelectorAll('.browser-btn:not([disabled])')) {
+    btn.addEventListener('click', async () => {
+      const browser = btn.dataset.browser;
+      btn.disabled = true;
+      try {
+        const r = await fetch('/api/connect-browser', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ browser }),
+        });
+        const d = await r.json();
+        if (!r.ok) { alert(d.error || 'Failed to connect'); btn.disabled = false; return; }
+        state.connectedBrowser = browser;
+        renderHDChip();
+        closeHDModal();
+        if (urlInput.value.trim()) inspect();
+      } catch (e) {
+        alert('Failed to connect: ' + e.message);
+        btn.disabled = false;
+      }
+    });
+  }
+  document.addEventListener('keydown', escCloseModal);
+}
+
+function closeHDModal() {
+  $('#modal-root').innerHTML = '';
+  document.removeEventListener('keydown', escCloseModal);
+}
+
+function escCloseModal(e) {
+  if (e.key === 'Escape') closeHDModal();
 }
 
 function setStatus(cls, label) {
@@ -1189,6 +1530,7 @@ urlClear.addEventListener('click', () => {
   fetchBtn.disabled = true;
   state.inspected = null;
   $('#preview-area').innerHTML = '';
+  $('#hd-banner-slot').innerHTML = '';
   renderQuality();
   updateCTA();
 });
@@ -1238,11 +1580,13 @@ async function inspect() {
     if (d.normalized_url) urlInput.value = d.normalized_url;
     renderPreview(d);
     renderQuality();
+    renderHDBanner();
     updateCTA();
   } catch (e) {
     showError(e.message);
     state.inspected = null;
     renderQuality();
+    renderHDBanner();
   } finally {
     fetchBtn.disabled = !urlInput.value.trim();
     fetchBtn.innerHTML = oldHTML;
@@ -1450,6 +1794,7 @@ function resetForm() {
   state.status = 'idle';
   $('#preview-area').innerHTML = '';
   $('#progress-area').innerHTML = '';
+  $('#hd-banner-slot').innerHTML = '';
   $('#cta-wrap').style.display = '';
   renderQuality();
   updateCTA();
