@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tubedrop",
+      "runtimeExecutable": "/Users/semenov/Desktop/ytconverter/.venv/bin/python3",
+      "runtimeArgs": ["-m", "ytconverter", "-W", "--no-browser", "--no-update", "--port", "8799"],
+      "port": 8799
+    }
+  ]
+}

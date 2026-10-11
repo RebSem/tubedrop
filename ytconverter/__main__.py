@@ -1,61 +1,56 @@
+"""tubedrop entry point. Only the web UI is supported."""
 import argparse
+import os
 import sys
+import warnings
 from pathlib import Path
+
+# Quiet the urllib3/LibreSSL deprecation warning in case the user is running
+# on an older Python. install.command normally bundles 3.12, so this is a
+# belt-and-suspenders thing.
+warnings.filterwarnings("ignore")
+os.environ.setdefault("PYTHONWARNINGS", "ignore")
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-EPILOG = """
-Upcoming:
-  ytconverter <url> -mp3 -b 128, 192, ...
-  ytconverter <url> -mp4 -r 720, 1080, 4K, ...
-  ytconverter <url> -multi_<mp4/mp3>
-  ytconverter <url> --playlist
-"""
 
 def main():
     parser = argparse.ArgumentParser(
-        description="YTConverter - YouTube Downloader CLI Tool",
-        epilog=EPILOG,
-        formatter_class=argparse.RawTextHelpFormatter,
-        add_help=False)
-
-    mutually_exclusive_group = parser.add_mutually_exclusive_group()
-
-    mutually_exclusive_group.add_argument(
-        "-S", "-s", action="store_true", help="Launch the interactive menu and the main script.")
-
-    mutually_exclusive_group.add_argument(
-        "-U", "--update",
+        prog="tubedrop",
+        description="tubedrop — local YouTube & VK Video downloader with a web UI.",
+    )
+    parser.add_argument(
+        "-W", "-w", "--web",
         action="store_true",
-        help="Update YTConverter to the latest version via pip.")
-
-    mutually_exclusive_group.add_argument(
-        "-v", "--version", action="store_true", help="Show the current installed version.")
-
-    mutually_exclusive_group.add_argument(
-        "-h", "--help", action="help", help="Show this help message.")
-
+        default=True,
+        help="Launch the web UI (default).",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="Override the default port (8765).",
+    )
+    parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Don't auto-open the browser on launch.",
+    )
+    parser.add_argument(
+        "--no-update",
+        action="store_true",
+        help="Skip the daily yt-dlp update check.",
+    )
     args = parser.parse_args()
 
-    if args.update:
-        from ytconverter.utils.update import update_self
-        update_self()
-        return
+    # Must run before yt_dlp is imported anywhere in this process.
+    if not args.no_update:
+        from ytconverter.updater import maybe_update
+        maybe_update()
 
-    elif args.version:
-        from ytconverter.config import load_local_version
-        local_version, version_type = load_local_version()
-        print(f"YTConverter version: {local_version}")
-        return
+    from ytconverter.web.server import serve
+    serve(open_browser=not args.no_browser, port=args.port)
 
-    elif args.S:
-        from ytconverter.cli.menu import main_loop
-        main_loop()
-        return
-
-    else:
-        parser.print_help()
-        return
 
 if __name__ == "__main__":
     main()

@@ -1,130 +1,143 @@
-## YTConverter™
-<img width="1024" height="700" alt="1000140947" src="https://github.com/user-attachments/assets/e0ce5970-36eb-4ddf-ba62-99c9c6f12f1b" />
+<div align="center">
+
+# tubedrop
+
+**Drop a YouTube or VK Video link. Get the file.**
+
+![tubedrop](docs/screenshot.png)
+
+<sub>Built on [kaifcodec/ytconverter](https://github.com/kaifcodec/ytconverter) · ui by [@RebSem](https://github.com/RebSem) · [rebsem.ru](https://rebsem.ru)</sub>
+
+</div>
 
 ---
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Version-4.0.3-blueviolet?style=for-the-badge&logo=github" />
-<!--  <img src="https://img.shields.io/github/forks/kaifcodec/ytconverter?style=for-the-badge&logo=git" />
-  <img src="https://img.shields.io/github/stars/kaifcodec/ytconverter?style=for-the-badge&logo=github" /> -->
-  <img src="https://img.shields.io/github/issues/kaifcodec/ytconverter?style=for-the-badge&logo=github" />
-  <img src="https://img.shields.io/badge/Status-Stable-brightgreen?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/Tested%20on-Termux-black?style=for-the-badge&logo=termux" />
-  <img src="https://img.shields.io/badge/Tested%20on-Windows-cyan?style=for-the-badge&logo=Windows" />
-  <img src="https://img.shields.io/badge/Tested%20on-Linux-black?style=for-the-badge&logo=Linux" />
- <!--- <img src="https://img.shields.io/pypi/dm/ytconverter?label=PyPI%20Downloads&color=blue&logo=pypi" /> --->
-  <img src="https://static.pepy.tech/badge/ytconverter?left_color=black&right_color=brightgreen" />
-</p>
+## Why
+
+I just wanted to save a video from YouTube. Every converter site I tried was the same:
+sketchy popups, redirects, fake "Download" buttons, hard caps at 360p, and you walk away with nothing.
+
+[**kaifcodec/ytconverter**](https://github.com/kaifcodec/ytconverter) already solved the hard part — `yt-dlp` and `ffmpeg` glued together perfectly. But it's a terminal tool with prompts.
+
+I wrapped it in a small web UI so it's two clicks instead of ten keystrokes.
 
 ---
 
+## Install — 2 clicks
 
-> **Preface (optional):** A subtle reflection before diving into the technical details, feel free to skip to main content.
+1. [**Download the zip**](https://github.com/RebSem/tubedrop/archive/refs/heads/main.zip), unzip wherever you want.
+2. Double-click `install.command`.
 
-|                                                                 |
-|-----------------------------------------------------------------|
-| **❓ Born from silent hands, shaping what they cannot fully feel.** |
-| **❓ Weighted and left alone, with no hand to guide through the quiet.** |
-| **❓ Moving the world’s sound, while never feeling its pulse.** |
-| <sub>— Author: 401</sub> |
----
-`YTConverter™` is a Python-based project developed by [kaifcodec](https://github.com/kaifcodec) designed to provide a robust tool for converting YouTube videos into various formats. This tool simplifies the process of downloading and converting videos from YouTube.
+The installer takes ~30 seconds. It:
+- Uses the system Python if it's 3.10 or newer, **otherwise downloads a self-contained Python 3.12 (~30 MB)** so you never have to think about Python versions.
+- Drops static `ffmpeg` + `ffprobe` binaries into the project folder (native Apple Silicon builds, checksum-verified). An existing copy is reused only if it actually runs.
+- Makes sure a JavaScript runtime is available (YouTube needs one) — reuses `deno` / `node` 22+ if you have them, otherwise downloads the official `deno`.
+- Installs `yt-dlp` into a local virtual environment (and repairs that environment if it broke).
+- Puts a `Tubedrop` shortcut on your Desktop.
 
----
-## ✅ Features
-- *Video Downloading* : Fetch videos directly from YouTube.
-- *Audio Downloading*.: Downloads audio of any video with wide range of bitrate selection.
-- *Multiple video download*.: Now you can download multiple videos using the tool, just paste the urls one by one.
-- *Subtitles*: Subtitles download support.
-- *Playlist download*: Full playlist download in mp3 or mp4 format with subtitles 
-- *Detailed Quality* : It fetches all the available resolutions for the video and let you select as per your need.
-- *Path selections* : It has inbuilt features to detect `Downloads` folder according to what platform user in.
-- *Custom Path* : Also you can enter your suitable path for every video.
-- *Title sanitization* : It has inbuilt `re` module implementation that converts special characters to text, avoiding errors
-- *Format Conversion*.: Convert downloaded videos into different formats such as MP3, MP4, etc.
-- *Metadata Handling* : Extract and manage metadata associated with YouTube videos.
-- *Colored output* : Colorful terminal output that make it easier to select options.
-- *Interactive CLI* : It provides interactive CLI menu that is way easier than using commands everytime.
-- *Auto Update* : You can simply run `ytconverter -U` and it will update yt-dlp and ytconverter to latest version, even it can auto detect whenever there's a new release of `ytconverter`.
+Re-running `install.command` is safe and is the fix for anything that stopped working.
 
-- Many more features inside try them all...
----
-## Screenshots
-<p align= "left">
- <img width="1072" height="344" alt="1000142597" src="https://github.com/user-attachments/assets/e45decd7-4750-4d1f-b21e-4f8bb078bccc" />
+No Homebrew. No `sudo`. No global installs. Everything stays in the project folder — delete the folder to uninstall.
 
-</p>
-<p align="left">
-  <img width="1080" height="946" alt="1000132190" src="https://github.com/user-attachments/assets/6954b057-1b23-44ec-bf1d-cb5fbff3c2a9" />
-
-</p>
+> First time only: macOS may show *"can't be opened — unidentified developer"*. Right-click → **Open** → confirm.
 
 ---
 
-## Requirements
-- Python 3.x
-- Required Python libraries (listed in `requirements.txt`)
-- ffmpeg & yt-dlp binary
+## Use
 
-## 🧩 Installation
+Double-click `Tubedrop` on your Desktop → paste a link → pick a quality → hit `download`.
 
-### 🐧 Linux / Termux / macOS
-```bash
-git clone https://github.com/kaifcodec/ytconverter.git
-cd ytconverter/standalone/
-./install.sh # Auto-setup ffmpeg + dependencies
+Supported links:
+
+| Site | Examples |
+|---|---|
+| YouTube | `youtube.com/watch?v=…`, `youtu.be/…`, `/shorts/…`, playlists |
+| VK Video | `vkvideo.ru/video-…`, `vk.com/video…`, `vk.ru/…`, clips (`vk.com/clip…`), embeds (`video_ext.php`), playlists |
+
+You can paste a whole message — tubedrop pulls the link out of the text.
+
+- **Quality chips show what the video really has**, with a size estimate: `4K60`, `1080p50`, `720p`… Vertical clips and wide VK videos (1920×960) are labelled the way the site labels them.
+- **H.264 is preferred** at each resolution (plays everywhere, hardware-decoded). Where a site only offers VP9/AV1 (YouTube 1440p/4K) you get that — VLC and IINA play it fine.
+- **MP3** comes as VBR V0 by default (or 320/256/192/128 kbps), with title, artist and cover art.
+- **Playlists** go into their own subfolder, numbered.
+- **Subtitles** (optional): Russian, English and the original language, as `.srt`.
+- **Cancel** stops the download and cleans up partial files.
+- `yt-dlp` updates itself once a day at launch — YouTube and VK change often.
+
+`Quit` in the top-right of the window cleanly stops the local server.
+
+---
+
+## Connect a browser (HD on YouTube, private VK videos)
+
+Sometimes YouTube hides everything above 360p from anonymous tools or asks you to "confirm you're not a bot", and some VK videos are visible only to signed-in users. When that happens, tubedrop shows a banner or a **connect a browser** button:
+
+<div align="center">
+  <img src="docs/hd-modal.png" alt="Connect a browser to unlock HD" width="520">
+</div>
+
+Pick the browser you're logged into YouTube / VK with (Safari, Chrome, Firefox, Brave, Edge, Opera, Vivaldi, Chromium). tubedrop tells `yt-dlp` to read that browser's cookies.
+
+- **Cookies never leave your Mac.** They're only sent to the sites they belong to, like your browser does.
+- **One-time setup.** Your choice is saved to `.tubedrop.config` and used on every launch.
+- **Reversible.** Click the browser chip in the header → **disconnect** to go back to anonymous mode.
+- **Safari** needs Terminal to have *Full Disk Access* (System Settings → Privacy & Security). Chrome-based browsers show a Keychain prompt — click *Allow*. If cookies can't be read, tubedrop says so and carries on without them.
+
+---
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Yellow "ffmpeg is missing or broken" notice, or only 360p | Double-click `install.command` again. (A Homebrew upgrade can break a Homebrew ffmpeg; the installer now keeps its own copy.) |
+| "No JavaScript runtime" notice, few YouTube qualities | Double-click `install.command` again — it adds `deno`. |
+| "The site changed something…" | yt-dlp needs an update; tubedrop does this daily at launch. |
+| VK channel pages (`vkvideo.ru/@name`) fail | Known yt-dlp issue — open a specific video or playlist instead. |
+
+---
+
+## Files
+
 ```
-### If install.sh fails, install ffmpeg manually
-```bash
-sudo apt install ffmpeg       # Debian/Ubuntu  
-pkg install ffmpeg            # Termux  
-sudo dnf install ffmpeg       # Fedora  
-sudo pacman -S ffmpeg         # Arch
-```
-### Install ytconverter from PyPI
-```bash
-pip3 install ytconverter
-ytconverter -S
-```
-
-## ⚙️ Update
-### Update ytconverter
-```bash
-./update.sh # update to new repo, new yt-dlp version 
-
-ytconverter -U # pypi package 
-
-```
-## 🪟 Windows
-### Clone the repository
-```bash
-git clone https://github.com/kaifcodec/ytconverter.git
-cd ytconverter/standalone/
-install.bat # Or manually install ffmpeg and add it to PATH
-pip3 install ytconverter 
-```
-### Then run:
-```bash
-ytconverter -S
+tubedrop/
+├── install.command       ← run once
+├── Tubedrop.command      ← created by installer (and on Desktop)
+├── README.md
+├── docs/
+│   ├── screenshot.png
+│   └── hd-modal.png
+├── tests/                ← python -m unittest discover -s tests -t .
+└── ytconverter/          ← Python package
+    ├── __main__.py       ← entry point (+ daily yt-dlp update)
+    ├── platforms.py      ← which links are accepted
+    ├── formats.py        ← quality ladder + format choice
+    ├── tools.py          ← finds a working ffmpeg / deno
+    ├── errors.py         ← friendly error messages
+    ├── updater.py
+    └── web/              ← local server + UI
+        ├── server.py
+        └── ui.py
 ```
 
----
-## ❤️ Support the project
-
-If this project helps you, consider supporting its development:
-
-**BTC (SegWit):** `bc1q0dzkuav8lq9lwu7gc457vwlda4utfcr5hpv7ka`
+After install, these appear (all gitignored):
+- `.venv/` — local Python env with `yt-dlp`
+- `.bin/ffmpeg`, `.bin/ffprobe` — bundled ffmpeg binaries
+- `.bin/deno` — JavaScript runtime for YouTube (only if you had none)
+- `.bin/python/` — bundled Python 3.12 (only when your system Python is too old)
+- `.tubedrop.config` — your connected browser
+- `.tubedrop.ytdlp-check` — when yt-dlp was last updated
+- `.tubedrop.pid` / `.url` — runtime state while the server is up
 
 ---
 
-### If you found this tool helpful leave a star that will motivate me to maintain this project and add new features 
+## Credits
 
-<a href="https://www.star-history.com/#kaifcodec/ytconverter&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=kaifcodec/ytconverter&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=kaifcodec/ytconverter&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=kaifcodec/ytconverter&type=date&legend=top-left" />
- </picture>
-</a>
+- Heavy lifting: [**kaifcodec/ytconverter**](https://github.com/kaifcodec/ytconverter) — go star them.
+- Underneath: [yt-dlp](https://github.com/yt-dlp/yt-dlp), [ffmpeg](https://ffmpeg.org/).
+- UI & packaging: [@RebSem](https://github.com/RebSem).
+
+Licensed under MIT. See [LICENSE](LICENSE).
 
 ---
+
+<sub>For personal use. Respect the [YouTube Terms of Service](https://www.youtube.com/static?template=terms) and the [VK Terms](https://vk.com/terms) — download only what you have the right to save.</sub>
