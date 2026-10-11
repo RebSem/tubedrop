@@ -10,6 +10,8 @@
 
 </div>
 
+**Status:** v1.3 (May 2026) is the current release, for macOS. The next version (VK Video links, smarter quality picking, a daily yt-dlp self-update, tests) is in progress on the [`wip/2026-10-11`](https://github.com/RebSem/tubedrop/tree/wip/2026-10-11) branch and is not released yet.
+
 ---
 
 ## Why
@@ -58,7 +60,7 @@ Sometimes YouTube hides everything above 360p from anonymous tools. When that ha
 
 Click **unlock hd** → pick the browser you're logged into YouTube with (Safari / Chrome / Firefox / Brave / Edge). tubedrop tells `yt-dlp` to read that browser's YouTube cookies, which lifts the cap and unlocks 720p / 1080p / 4K.
 
-- **Cookies never leave your Mac.** tubedrop talks only to `youtube.com`.
+- **Cookies never leave your Mac.** yt-dlp only sends them to YouTube, the same way your browser does.
 - **One-time setup.** Your choice is saved to `.tubedrop.config` and used on every launch.
 - **Reversible.** Click the `hd · safari` chip in the header → **disconnect** to go back to anonymous mode.
 
@@ -71,6 +73,7 @@ tubedrop/
 ├── install.command       ← run once
 ├── Tubedrop.command      ← created by installer (and on Desktop)
 ├── README.md
+├── AGENTS.md             ← guide for contributors & coding agents
 ├── docs/
 │   ├── screenshot.png
 │   └── hd-modal.png
@@ -89,6 +92,24 @@ After install, these appear (all gitignored):
 - `.bin/python/` — bundled Python 3.12 (only when your system Python is too old)
 - `.tubedrop.config` — your HD-unlock choice
 - `.tubedrop.pid` / `.url` — runtime state while the server is up
+
+---
+
+## Run from source (developers)
+
+Stack: Python 3.10+ (stdlib `http.server`, no framework) · [yt-dlp](https://github.com/yt-dlp/yt-dlp) · ffmpeg · a single-file vanilla-JS UI (`ytconverter/web/ui.py`, no build step).
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install --upgrade --pre "yt-dlp[default]"
+# ffmpeg must be on PATH (install.command puts a copy in .bin/)
+.venv/bin/python -m ytconverter --help
+.venv/bin/python -m ytconverter --no-browser --port 8799   # then open http://127.0.0.1:8799/
+```
+
+The server listens on `127.0.0.1` only (default port 8765). There are no environment variables or secrets; the only setting is `.tubedrop.config` (your connected browser). No CI, no hosting — users download `main` as a zip and run `install.command`; releases are git tags + GitHub Releases.
+
+Working on the code (or pointing a coding agent at it)? Read [AGENTS.md](AGENTS.md) first.
 
 ---
 

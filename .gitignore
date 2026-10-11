@@ -27,3 +27,42 @@ error_logs.txt
 rm_cache.py
 *.txt
 auto.sh
+
+# Written by the daily yt-dlp updater (wip/2026-10-11 and later)
+.tubedrop.ytdlp-check
+
+# Python tooling / test caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Env files (keep an example if one is ever added)
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Editors / agents
+.idea/
+.vscode/
+*.swp
+.claude/settings.local.json
+.claude/worktrees/
+
+# Node (promo/ video project on the wip branch)
+node_modules/
+
+# Local media that must never land in this public repo
+# (downloaded videos, phone/screen recordings, macOS screenshots)
+*.mp4
+*.MP4
+*.mov
+*.MOV
+*.webm
+Screenshot *.png
+Снимок экрана*
